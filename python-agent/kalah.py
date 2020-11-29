@@ -16,7 +16,7 @@ class Kalah(object):
 
     
     def isLegalMove(self, move):
-        return (move.getHole() < = self.board.getNoOfHoles()) and
+        return (move.getHole() <= self.board.getNoOfHoles()) and \
                (self.board.getSeeds(move.getSide(), move.getHole()) != 0)
 
 
@@ -52,9 +52,9 @@ class Kalah(object):
                     sowHole = 1
             self.board.addSeeds(sowSide, sowHole, 1)
         
-        if sowSide == move.getSide() and
-           sowHole > 0 and
-           self.board.getSeeds(sowSide, sowHole) == 1 and
+        if sowSide == move.getSide() and \
+           sowHole > 0 and \
+           self.board.getSeeds(sowSide, sowHole) == 1 and \
            self.board.getSeedsOp(sowSide, sowHole) > 0:
 
             self.board.addSeedstoStore(move.getSide(),
@@ -65,7 +65,7 @@ class Kalah(object):
         finishedSide = None
         if self.holeEmpty(self.board, move.getSide()):
             finishedSide = move.getSide()
-        elif self.holesEmpty(self.board, move.getSide(),.opposite()):
+        elif self.holesEmpty(self.board, move.getSide().opposite()):
             finishedSide = move.getSide().opposite()
         
         if finishedSide is not None:
@@ -81,15 +81,15 @@ class Kalah(object):
         if sowHole == 0:
             return move.getSide()
         else:
-            return move getSide().opposite()
+            return move.getSide().opposite()
 
 
     def holesEmpty(self, board, side):
-        for i in range(1: board.getNoOfHoles()+1):
+        for i in range(1, board.getNoOfHoles()+1):
             if board.getSeeds(side, hole) != 0:
                 return False
             return True
 
     
     def gameOver(self):
-        return self.holesEmpty(self.board, s.Side.NORTH) || holesEmpty(self.board, s.Side.SOUTH)
+        return self.holesEmpty(self.board, s.Side.NORTH) or holesEmpty(self.board, s.Side.SOUTH)
