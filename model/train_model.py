@@ -100,8 +100,8 @@ def select_action(state, epsilon):
 ## Training ##
 steps_done = 0
 
-for target_list in expression_list:
-    for target_list in experssion_list:
+for episode in range(0,10000):
+    for t in count():
         #TODO
 
         #Save target network
