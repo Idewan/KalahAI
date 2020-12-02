@@ -27,7 +27,7 @@ if is_ipython:
     from IPython import display
 plt.ion()
 
-device = torch.device('cpu')
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 scores = []
 
 #ENVIRONMENT SPECIFC
@@ -122,6 +122,54 @@ def board_view_player(board, curr_turn):
     return torch(board.flatten())
 
 
+def compete(self, env):
+
+    player1_score = {'win': 0, 'draw': 0, 'loss': 0}
+    player2_score = {'win': 0, 'draw': 0, 'loss': 0}
+
+    for episode in range(0, 10):
+        env.reset()
+        curr_turn = old_turn = env.turn
+        state = torch(board.flatten())
+        done = False
+        while(not done):
+            # Make move in environment
+            action = select_action(state, EPSILON)
+            next_state, _, done = env.makeMove(action)  #State is 2D here
+
+            # Next state is always in the view of north player 
+            # Next state should be in the view of the current player for the memory
+            next_state_curr = next_state.copy()
+            next_state_curr = board_view_player(next_state_curr, curr_turn)
+            
+            # Store in memory
+            memory.push(state, action, next_state_curr, reward)
+            
+            old_turn = curr_turn
+            curr_turn = env.turn
+            
+            while(True and env.turn == env.player2):
+                next_state = # Blah
+
+            # If the turn is the same i.e. old_turn == curr_turn
+            # then we do not swap the board we just change state -> next state
+            if old_turn != curr_turn:
+                state = board_view_player(next_state, curr_turn)
+            else:
+                state = next_state_curr.copy()
+
+        if reward == 1:
+            player1_score['win'] += 1
+            player2_score['loss'] += 1
+        elif reward == 0:
+            player1_score['draw'] += 1
+            player2_score['draw'] += 1
+        elif reward == -1:
+            player1_score['loss'] += 1
+            player2_score['win'] += 1
+
+    return player1_score['win'] / (player1_score['loss'] + player1_score['draw'])
+
 # ## Training ##
 steps_done = 0
 
@@ -163,7 +211,8 @@ for episode in range(0,10000):
             plot_scores()
 
     if episode % TARGET_UPDATE:
-        target_net.load_state_dict(policy_net.state_dict())
+        if compete(env) > 0.55:
+            target_net.load_state_dict(policy_net.state_dict())
 
 print('Complete')
 plt.ioff()

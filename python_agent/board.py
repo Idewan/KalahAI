@@ -32,7 +32,16 @@ class Board(object):
 
     
     def clone(original):
-        return Board(original.holes, original.seeds)
+
+        holes = original.holes
+        
+        clone = np.zeros((2, holes+1))
+
+        for i in range(holes+1):
+            clone[NORTH_ROW][i] = original.board[NORTH_ROW][i]
+            clone[SOUTH_ROW][i] = original.board[SOUTH_ROW][i]
+
+        return clone
 
     
     def getNoOfHoles(self):
