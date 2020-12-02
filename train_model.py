@@ -18,6 +18,10 @@ import torch.optim as optim
 board = Board(7,7)
 env = Kalah(board)
 
+loop 
+env_sim = Kalah(curr_board)
+break when turn == curr_player
+board_sim 
 is_ipython = 'iniline' in matplotlib.get_backend()
 if is_ipython:
     from IPython import display
@@ -71,7 +75,8 @@ def optimize_model(memory, optimizer, batch_size, gamma):
 
     #Compute the state-action pair Q(s',a)
     state_action_values = policy_net(state_batch).gather(1, action_batch)
-
+    
+    #Changed
     #V(s_t+1)
     #We use the next state as "expected" return
     #hence we need to take the max return of the next_state 
@@ -139,6 +144,10 @@ for episode in range(0,10000):
         
         old_turn = curr_turn
         curr_turn = env.turn
+        
+        while(True and env.turn == env.player2):
+
+        next_state = #Blah
 
         #If the turn is the same i.e. old_turn == curr_turn
         #then we do not swap the board we just change state -> next state
