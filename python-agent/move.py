@@ -1,8 +1,8 @@
 class Move(object):
 
     def __init__(self, side, hole):
-        if holes < 1:
-            raise ValueError(f'There has to be at least one hole, but {holes} were requested.')
+        if hole < 1:
+            raise ValueError(f'There has to be at least one hole, but {hole} were requested.')
 
         self.side = side
         self.hole = hole

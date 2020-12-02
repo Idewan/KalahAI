@@ -55,7 +55,7 @@ class Board(object):
         self.board[self.indexOfSide(side)][hole] = seeds
 
     
-    def addSeed(self, side, hole, seed):
+    def addSeeds(self, side, hole, seeds):
         if hole < 1 or hole > self.holes:
             raise ValueError(f'Hole number must be between 1 and {len(self.board[self.NORTH_ROW]) - 1} but was {hole}.')
         if seeds < 0:
@@ -80,7 +80,7 @@ class Board(object):
         self.board[1-self.indexOfSide(side)][self.holes+1-hole] = seeds
 
     
-    def addSeed(self, side, hole, seed):
+    def addSeedsOp(self, side, hole, seeds):
         if hole < 1 or hole > self.holes:
             raise ValueError(f'Hole number must be between 1 and {len(self.board[self.NORTH_ROW]) - 1} but was {hole}.')
         if seeds < 0:

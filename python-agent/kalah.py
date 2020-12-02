@@ -2,6 +2,8 @@ import board as b
 import side as s
 import move as m
 
+# TODO IMPORTANT: DEBUG
+
 class Kalah(object):
 
     def __init__(self, board):
@@ -63,7 +65,7 @@ class Kalah(object):
             self.board.setSeedsOp(move.getSide(), sowHole, 0)
 
         finishedSide = None
-        if self.holeEmpty(self.board, move.getSide()):
+        if self.holesEmpty(self.board, move.getSide()):
             finishedSide = move.getSide()
         elif self.holesEmpty(self.board, move.getSide().opposite()):
             finishedSide = move.getSide().opposite()
@@ -75,8 +77,6 @@ class Kalah(object):
                 seeds += self.board.getSeeds(collectingSide, hole)
                 self.board.setSeeds(collectingSide, hole, 0)
             self.board.addSeedsToStore(collectingSide, seeds)
-
-        self.board.notifyObservers(move)
 
         if sowHole == 0:
             return move.getSide()
