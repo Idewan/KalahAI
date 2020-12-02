@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.transforms as T
 
-class DQN(nn.module):
+class DQN(nn.Module):
     def __init__(self, input_size, outputs):
         super(DQN, self).__init__()
         #Number of layers

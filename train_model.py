@@ -1,42 +1,55 @@
 from __future__ import print_function
-from itertools import count
+
+#Custom imports
+from model import dqn
+from model import replay_memory
+from python_agent.kalah_train import Kalah
+from python_agent.board import Board
+from python_agent.side import Side
+
 import matplotlib
 import torch
 import math
-import matplotlib as plt
+import matplotlib.pyplot as plt
 import numpy as np
 import torch.optim as optim
 
-#Custom imports
-import dqn
-import replay_memory
+
+board = Board(7,7)
+env = Kalah(board)
+
+is_ipython = 'iniline' in matplotlib.get_backend()
+if is_ipython:
+    from IPython import display
+plt.ion()
+
+device = torch.device('cpu')
+scores = []
 
 #ENVIRONMENT SPECIFC
-n_actions=#TODO
+n_actions=env.actionspace_size
 policy_net = dqn.DQN(16,8).to(device)             #Board has 16 inputs
 target_net = dqn.DQN(16,8).to(device)             #and 8 actions (SWAP, 7 holes)
 target_net.load_state_dict(policy_net.state_dict())
-target_next.eval()
+target_net.eval()
 
-BATCH_SIZE = #TODO
-GAMMA = 
+BATCH_SIZE = 128
+GAMMA = 0.999
 EPSILON = 0.25      #EPSILON start value
-TARGET_UPDATE=#TODO #TARGET value for update
+TARGET_UPDATE=20    #TARGET value for update
 
 memory_size = 1000000
 optimizer = optim.Adam(policy_net.parameters())
 memory = replay_memory.ReplayMemory(memory_size)
 
-def plot_score_difference():
+def plot_scores():
     plt.figure(2)
     plt.clf
-    score_difference = #TODO
     plt.title("Training")
     plt.xlabel("Episode")
     plt.ylabel("Score Difference")
-    plt.plot(score_difference.numpy())
+    plt.plot(scores.numpy())
 
-    #TODO
     plt.pause(0.001)
 
     if is_python:
@@ -49,7 +62,7 @@ def optimize_model(memory, optimizer, batch_size, gamma):
         return
 
     #Need a nice way to sequence the BATCH
-    batch = Transition(*zip(*transitions))
+    batch = memory.Transition(*zip(*transitions))
 
     #Sequence batch into reward, state and action
     state_batch = torch.cat(batch.state)
@@ -64,7 +77,7 @@ def optimize_model(memory, optimizer, batch_size, gamma):
     #hence we need to take the max return of the next_state 
     #ensuring that we do not pass any None next_states
     mask = torch.where(batch.next_state is not [None])
-    non_final_states = torch.cat([for s in batch.next_state if s is not None])
+    non_final_states = torch.cat([s for s in batch.next_state if s is not None])
 
     expected_state_values = torch.zeros(batch_size, device=device)
     expected_state_values[mask] = target_net(non_final_states).max(1)[0].detach()
@@ -95,16 +108,53 @@ def select_action(state, epsilon):
             return policy_net(state).max(1)[1].view(1,1).numpy()[0][0]
     else:
         return random.randrange(n_actions)
-        
 
-## Training ##
+#Player's side
+#Let's say NORTH - 0 side SOUTH - 1
+def board_view_player(board, curr_turn):
+    if curr_turn == Side.SOUTH:
+        board[[0,1]] = board[[1,0]]
+    return torch(board.flatten())
+
+
+# ## Training ##
 steps_done = 0
 
 for episode in range(0,10000):
-    for t in count():
-        #TODO
+    env.reset()
+    curr_turn = old_turn = env.turn
+    state = torch(board.flatten())
+    while(True):
+        #Make move in environment
+        action = select_action(state, EPSILON)
+        next_state, reward, done = env.makeMove(action)  #State is 2D here
+
+        #^Next state is always in the view of north player 
+        #Next state should be in the view of the current player for the memory
+        next_state_curr = next_state.copy()
+        next_state_curr = board_view_player(next_state_curr, curr_turn)
+        
+        #Store in memory
+        memory.push(state, action, next_state_curr, reward)
+        
+        old_turn = curr_turn
+        curr_turn = env.turn
+
+        #If the turn is the same i.e. old_turn == curr_turn
+        #then we do not swap the board we just change state -> next state
+        if old_turn != curr_turn:
+            state = board_view_player(next_state, curr_turn)
+        else:
+            state = next_state_curr.copy()
 
         #Save target network
+        optimize_model()
+        if done:
+            scores.append([env.score_player1, env.score_player2])
+            plot_scores()
+
+    if episode % TARGET_UPDATE:
+        target_net.load_state_dict(policy_net.state_dict())
 
 print('Complete')
 plt.ioff()
