@@ -8,6 +8,7 @@ from python_agent.board import Board
 from python_agent.side import Side
 
 import matplotlib
+import random
 import torch
 import math
 import matplotlib.pyplot as plt
@@ -18,10 +19,6 @@ import torch.optim as optim
 board = Board(7,7)
 env = Kalah(board)
 
-loop 
-env_sim = Kalah(curr_board)
-break when turn == curr_player
-board_sim 
 is_ipython = 'iniline' in matplotlib.get_backend()
 if is_ipython:
     from IPython import display
@@ -32,8 +29,8 @@ scores = []
 
 #ENVIRONMENT SPECIFC
 n_actions=env.actionspace_size
-policy_net = dqn.DQN(16,8).to(device)             #Board has 16 inputs
-target_net = dqn.DQN(16,8).to(device)             #and 8 actions (SWAP, 7 holes)
+policy_net = dqn.DQN(16,8).to(device).double()             #Board has 16 inputs
+target_net = dqn.DQN(16,8).to(device).double()         #and 8 actions (SWAP, 7 holes)
 target_net.load_state_dict(policy_net.state_dict())
 target_net.eval()
 
@@ -101,121 +98,111 @@ def optimize_model(memory, optimizer, batch_size, gamma):
     optimizer.step()
 
 def select_action(state, epsilon):
-    global steps_done
     #To select whether we explore or exploit, we will compute 
     #a random value in the range [0,1.0] and if our epsilon
     #is smaller, then we take a random action.
     probability = random.random()
-    steps_done += 1
     if probability > epsilon:
         #use our policies from target NN
         with torch.no_grad():
-            return policy_net(state).max(1)[1].view(1,1).numpy()[0][0]
+            return env.actionspace[torch.argmax(policy_net(state))]
     else:
-        return random.randrange(n_actions)
+        return env.actionspace[random.randrange(n_actions)]
 
 #Player's side
 #Let's say NORTH - 0 side SOUTH - 1
 def board_view_player(board, curr_turn):
     if curr_turn == Side.SOUTH:
         board[[0,1]] = board[[1,0]]
-    return torch(board.flatten())
+    print(board)
+    board = torch.from_numpy(board.flatten())
+    return board
 
 
-def compete(self, env):
+def compete(env):
 
     player1_score = {'win': 0, 'draw': 0, 'loss': 0}
     player2_score = {'win': 0, 'draw': 0, 'loss': 0}
 
     for episode in range(0, 10):
         env.reset()
-        curr_turn = old_turn = env.turn
-        state = torch(board.flatten())
+        state = env.board.board.copy()
         done = False
         while(not done):
             # Make move in environment
-            action = select_action(state, EPSILON)
+            state = board_view_player(state, env.player1)
+            action = select_action(state, 0)
             next_state, _, done = env.makeMove(action)  #State is 2D here
 
-            # Next state is always in the view of north player 
-            # Next state should be in the view of the current player for the memory
-            next_state_curr = next_state.copy()
-            next_state_curr = board_view_player(next_state_curr, curr_turn)
-            
-            # Store in memory
-            memory.push(state, action, next_state_curr, reward)
-            
-            old_turn = curr_turn
-            curr_turn = env.turn
-            
-            while(True and env.turn == env.player2):
-                next_state = # Blah
+            while(env.turn == env.player2 and not done):
+                #Simulate the turn(s) for the second player
+                next_state = board_view_player(next_state, env.player2)
+                action_p2 = select_action(next_state, EPSILON)
+                next_state_p2, _, done = env.makeMove(action_p2)
 
-            # If the turn is the same i.e. old_turn == curr_turn
-            # then we do not swap the board we just change state -> next state
-            if old_turn != curr_turn:
-                state = board_view_player(next_state, curr_turn)
-            else:
-                state = next_state_curr.copy()
+                next_state = next_state_p2
 
-        if reward == 1:
+            state = next_state
+
+        if env.reward == 1:
             player1_score['win'] += 1
             player2_score['loss'] += 1
-        elif reward == 0:
+        elif env.reward == 0:
             player1_score['draw'] += 1
             player2_score['draw'] += 1
-        elif reward == -1:
+        elif env.reward == -1:
             player1_score['loss'] += 1
             player2_score['win'] += 1
 
-    return player1_score['win'] / (player1_score['loss'] + player1_score['draw'])
+    return player1_score['win'] / (10)
 
 # ## Training ##
-steps_done = 0
+# for episode in range(0,10000):
+#     env.reset()
+#     curr_turn = env.turn
+#     state = torch(env.board.board.flatten())
+#     done = False
 
-for episode in range(0,10000):
-    env.reset()
-    curr_turn = old_turn = env.turn
-    state = torch(board.flatten())
-    while(True):
-        #Make move in environment
-        action = select_action(state, EPSILON)
-        next_state, reward, done = env.makeMove(action)  #State is 2D here
-
-        #^Next state is always in the view of north player 
-        #Next state should be in the view of the current player for the memory
-        next_state_curr = next_state.copy()
-        next_state_curr = board_view_player(next_state_curr, curr_turn)
+#     while(not done):
+#         #Make move in environment
+#         state_curr = state.copy()
+#         state_curr = board_view_player(state, env.player1)
+#         action = select_action(state, EPSILON)
+#         next_state, reward, done = env.makeMove(action)  #State is 2D here
         
-        #Store in memory
-        memory.push(state, action, next_state_curr, reward)
-        
-        old_turn = curr_turn
-        curr_turn = env.turn
-        
-        while(True and env.turn == env.player2):
+#         #Simulation of the second player's turn.
+#         while(env.turn == env.player2 and not done):
+#             #Simulate the turn(s) for the second player
+#             next_state = board_view_player(next_state, env.player2)
+#             action_p2 = select_action(next_state, EPSILON)
+#             next_state_p2, _, done = env.makeMove(action_p2)
 
-        next_state = #Blah
+#             next_state = next_state_p2
 
-        #If the turn is the same i.e. old_turn == curr_turn
-        #then we do not swap the board we just change state -> next state
-        if old_turn != curr_turn:
-            state = board_view_player(next_state, curr_turn)
-        else:
-            state = next_state_curr.copy()
+#         #^Next state is always in the view of north player 
+#         #Next state should be in the view of the current player for the memory
+#         next_state_curr = next_state.copy()
+#         next_state_curr = board_view_player(next_state_curr, curr_turn)
 
-        #Save target network
-        optimize_model()
-        if done:
-            scores.append([env.score_player1, env.score_player2])
-            plot_scores()
+#         #Store in memory
+#         memory.push(state_curr, action, next_state_curr, reward)
 
-    if episode % TARGET_UPDATE:
-        if compete(env) > 0.55:
-            target_net.load_state_dict(policy_net.state_dict())
+#         state = next_state.copy()
+
+#         #Save target network
+#         optimize_model()
+#         if done:
+#             scores.append(env.score_player1 - env.score_player2)
+#             plot_scores()
+
+#     if episode % TARGET_UPDATE:
+#         if compete(env) > 0.55:
+#             target_net.load_state_dict(policy_net.state_dict())
 
 print('Complete')
 plt.ioff()
 plt.show()
 
-torch.save(target_net.state_dict(), 'tutorial_mode.pth')
+# torch.save(target_net.state_dict(), 'tutorial_mode.pth')
+
+print(compete(env))

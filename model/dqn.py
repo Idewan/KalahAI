@@ -15,10 +15,10 @@ class DQN(nn.Module):
         self.head = nn.Linear(input_size, outputs)
     
     def forward(self, x):
-        x = F.relu(self.dense1)
-        x = F.relu(self.dense2)
-        x = F.relu(self.dense3)
-        return self.head(x.view(x.size(0), -1))
+        x = F.relu(self.dense1(x))
+        x = F.relu(self.dense2(x))
+        x = F.relu(self.dense3(x))
+        return self.head(x)
     
     def load(self, weights):
         self.load_state_dict(weights)
