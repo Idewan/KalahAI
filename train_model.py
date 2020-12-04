@@ -227,9 +227,13 @@ for episode in range(100000):
 
         #Save target network
         optimize_model()
-        if done:
-            scores.append(env.score_player1 - env.score_player2)
-            plot_scores()
+        # if done:
+        #     scores.append(env.score_player1 - env.score_player2)
+        #     plot_scores()
+    print(env.score_player1, env.score_player2)
+    print(env.no_turns)
+    print("This is the {} th Game", episode)
+    print(env.reward)
 
     if episode % TARGET_UPDATE == 0:
         win_percentage = compete(env, 100) 
@@ -241,5 +245,5 @@ print('Complete')
 #plt.ioff()
 
 
-# torch.save(policy_net.state_dict(), 'policy_net.pth')
-# torch.save(target_net.state_dict(), 'target_net.pth')
+torch.save(policy_net.state_dict(), 'policy_net.pth')
+torch.save(target_net.state_dict(), 'target_net.pth')
