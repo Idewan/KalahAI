@@ -48,13 +48,16 @@ class Kalah(object):
         move = None
         if action == -1:
             # print("try to swap")
-            if self.no_turns != 2:
+            if self.no_turns != 2 or self.turn == self.player1:
                 # print("illegal swap")
-                self.reward = -1
+                if self.turn == self.player1:
+                    self.reward = -1
+                else:
+                    self.reward = 1
                 return None, self.reward, True
             # print("swapped")
             self.swap()
-            return self.board.board, self.reward, False
+            return self.board.board, 0, False
         else:
             # print("create move")
             move = m.Move(self.turn, action)
@@ -62,7 +65,10 @@ class Kalah(object):
         # if illegal move, then lose
         if not self.isLegalMove(move):
             # print("illegal move")
-            self.reward = -1
+            if self.turn == self.player1:
+                self.reward = -1
+            else:
+                self.reward = 1
             return None, self.reward, True
 
         # pick seeds

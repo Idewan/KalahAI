@@ -109,6 +109,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+kalah-env
 
 # Spyder project settings
 .spyderproject
@@ -128,4 +129,5 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-kalah-env
+# models
+*pth

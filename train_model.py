@@ -37,8 +37,8 @@ target_net.eval()
 
 BATCH_SIZE = 128
 GAMMA = 0.999
-EPSILON = 0.25      #EPSILON start value
-TARGET_UPDATE=100    #TARGET value for update
+EPSILON = 0.25     #EPSILON start value
+TARGET_UPDATE = 1000    #TARGET value for update
 
 memory_size = 1000000
 optimizer = optim.Adam(policy_net.parameters())
@@ -111,7 +111,7 @@ def select_action(state, epsilon):
     #a random value in the range [0,1.0] and if our epsilon
     #is smaller, then we take a random action.
     probability = random.random()
-    if probability > epsilon:
+    if probability <= epsilon:
         #use our policies from target NN
         with torch.no_grad():
             return env.actionspace[torch.argmax(policy_net(state))]
@@ -120,7 +120,7 @@ def select_action(state, epsilon):
 
 def select_action_fixed(state, epsilon):
     probability = random.random()
-    if probability > epsilon:
+    if probability <= epsilon:
         #use our policies from target NN
         with torch.no_grad():
             return env.actionspace[torch.argmax(target_net(state))]
@@ -143,29 +143,35 @@ def compete(env, n):
 
     for episode in range(n):
         env.reset()
+        # print(f"*********** Game {episode} ***********")
+        # print(env.board.toString())
         state = env.board.board.copy()
         done = False
         while(not done):
             # Make move in environment
             state = board_view_player(state, env.player1).to(device)
+            # print(state)
             action = select_action(state, 0)
-            # print("Action Player 1 {}".format(action))
+            # print("Action Player 1: {}".format(action))
             next_state, _, done = env.makeMove(action)  #State is 2D here
             next_state = next_state if next_state is None else next_state.copy()
+            # print(next_state)
 
             while(env.turn == env.player2 and not done):
                 #Simulate the turn(s) for the second player
                 next_state = board_view_player(next_state, env.player2).to(device)
                 # print(next_state)
                 action_p2 = select_action_fixed(next_state, 0)
-                # print("Action Player 2 {}".format(action_p2))
+                # print("Action Player 2: {}".format(action_p2))
                 next_state_p2, _, done = env.makeMove(action_p2)
 
                 next_state = None if next_state_p2 is None else next_state_p2.copy()
-            # print(env.reward)
+                # print(next_state)
 
             state = next_state
-        # print(env.reward)
+        
+        # print(f'Done state: {state}')
+        # print(f'Reward: {env.reward}')
         if env.reward == 1:
             # print("wassap")
             player1_score['win'] += 1
@@ -178,7 +184,7 @@ def compete(env, n):
             # print("Here")
             player1_score['loss'] += 1
             player2_score['win'] += 1
-    print(player1_score, player2_score)
+    # print(player1_score, player2_score)
     return player1_score['win'] / (n)
 
 # ## Training ##
@@ -230,10 +236,10 @@ for episode in range(100000):
         # if done:
         #     scores.append(env.score_player1 - env.score_player2)
         #     plot_scores()
-    print(env.score_player1, env.score_player2)
-    print(env.no_turns)
-    print("This is the {} th Game", episode)
-    print(env.reward)
+    # print(env.score_player1, env.score_player2)
+    # print(env.no_turns)
+    # print(f"This is the {episode} th Game")
+    # print(env.reward)
 
     if episode % TARGET_UPDATE == 0:
         win_percentage = compete(env, 100) 
