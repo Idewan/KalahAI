@@ -50,7 +50,8 @@ class Kalah(object):
             # print("try to swap")
             if self.no_turns != 2:
                 # print("illegal swap")
-                return None, -1, True
+                self.reward = -1
+                return None, self.reward, True
             # print("swapped")
             self.swap()
             return self.board.board, self.reward, False
@@ -162,17 +163,17 @@ class Kalah(object):
             self.score_player1 = self.get_score(self.player1)
             self.score_player2 = self.get_score(self.player2)
 
-            reward = 0
+            self.reward = 0
             if self.score_player1 > self.score_player2 and move.getSide() == self.player1:
-                reward = 1
+                self.reward = 1
             elif self.score_player1 < self.score_player2 and move.getSide() == self.player1:
-                reward = -1
+                self.reward = -1
             elif self.score_player2 > self.score_player1 and move.getSide() == self.player2:
-                reward = 1
+                self.reward = 1
             elif self.score_player2 < self.score_player1 and move.getSide() == self.player2:
-                reward = -1
+                self.reward = -1
 
-            return None, reward, True
+            return None, self.reward, True
 
         # whose turn is it?
         if sowHole == 0:  # the store implies (sowSide == move.getSide())
