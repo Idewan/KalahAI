@@ -68,14 +68,15 @@ def optimize_model():
     batch = memory.Transition(*zip(*transitions))
 
     #Sequence batch into reward, state and action
-    state_batch = torch.cat(batch.state)
-    reward_batch = torch.cat(batch.reward)
-    action_batch = torch.cat(batch.action)
+    state_batch = torch.cat(batch.state).to(device)
+    reward_batch = torch.cat(batch.reward).to(device)
+    action_batch = torch.cat(batch.action).to(device)
 
-    state_batch = torch.reshape(state_batch, (BATCH_SIZE, 16))
+    state_batch = torch.reshape(state_batch, (BATCH_SIZE, 16)).to(device)
 
     #Compute the state-action pair Q(s',a)
-    state_action_values = policy_net(state_batch).gather(1, action)
+    # print(torch.tensor(action, dtype=torch.int64))
+    state_action_values = policy_net(state_batch).gather(1, action.type(torch.int64))
     
     #Changed
     #V(s_t+1)
@@ -84,9 +85,9 @@ def optimize_model():
     #ensuring that we do not pass any None next_states
     mask = torch.tensor(tuple(map(lambda l: l is not None,
                                             batch.next_state)), device = device,
-                                            dtype=torch.bool)
-    non_final_states = torch.cat([s for s in batch.next_state if s is not None])
-    non_final_states = torch.reshape(non_final_states, (-1, 16))
+                                            dtype=torch.bool).to(device)
+    non_final_states = torch.cat([s for s in batch.next_state if s is not None]).to(device)
+    non_final_states = torch.reshape(non_final_states, (-1, 16)).to(device)
 
     expected_state_values = torch.zeros(BATCH_SIZE, device=device)
     expected_state_values= expected_state_values.double()
@@ -146,7 +147,7 @@ def compete(env, n):
         done = False
         while(not done):
             # Make move in environment
-            state = board_view_player(state, env.player1)
+            state = board_view_player(state, env.player1).to(device)
             action = select_action(state, 0)
             # print("Action Player 1 {}".format(action))
             next_state, _, done = env.makeMove(action)  #State is 2D here
@@ -154,7 +155,7 @@ def compete(env, n):
 
             while(env.turn == env.player2 and not done):
                 #Simulate the turn(s) for the second player
-                next_state = board_view_player(next_state, env.player2)
+                next_state = board_view_player(next_state, env.player2).to(device)
                 # print(next_state)
                 action_p2 = select_action_fixed(next_state, 0)
                 # print("Action Player 2 {}".format(action_p2))
@@ -190,22 +191,22 @@ for episode in range(100000):
     while(not done):
         #Make move in environment
         state_curr = state.copy()
-        state_curr = board_view_player(state_curr, env.player1)
+        state_curr = board_view_player(state_curr, env.player1).to(device)
         action = select_action(state_curr, EPSILON)
         next_state, reward, done = env.makeMove(action)  #State is 2D here
-        reward = torch.tensor([reward])
+        reward = torch.tensor([reward]).to(device)
 
         #Transition action to proper format
         action_full = np.zeros((1,8), dtype=int)
         action_full[0][7 if action == -1 else action - 1] = 1
-        action = torch.from_numpy(action_full)
+        action = torch.from_numpy(action_full).to(device)
 
         next_state = next_state if next_state is None else next_state.copy()
         
         #Simulation of the second player's turn.
         while(env.turn == env.player2 and not done):
             #Simulate the turn(s) for the second player
-            next_state = board_view_player(next_state, env.player2)
+            next_state = board_view_player(next_state, env.player2).to(device)
             action_p2 = select_action_fixed(next_state, EPSILON)
             next_state_p2, _, done = env.makeMove(action_p2)
 
@@ -215,7 +216,7 @@ for episode in range(100000):
         #Next state should be in the view of the current player for the memory
         if next_state is not None:
             next_state_curr = next_state.copy() 
-            next_state_curr = board_view_player(next_state_curr, curr_turn)
+            next_state_curr = board_view_player(next_state_curr, curr_turn).to(device)
         else:
             next_state_curr = None
 
