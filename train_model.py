@@ -148,32 +148,40 @@ def compete(env, n):
             # Make move in environment
             state = board_view_player(state, env.player1)
             action = select_action(state, 0)
+            # print("Action Player 1 {}".format(action))
             next_state, _, done = env.makeMove(action)  #State is 2D here
+            next_state = next_state if next_state is None else next_state.copy()
 
             while(env.turn == env.player2 and not done):
                 #Simulate the turn(s) for the second player
                 next_state = board_view_player(next_state, env.player2)
+                # print(next_state)
                 action_p2 = select_action_fixed(next_state, 0)
+                # print("Action Player 2 {}".format(action_p2))
                 next_state_p2, _, done = env.makeMove(action_p2)
 
-                next_state = next_state_p2
+                next_state = None if next_state_p2 is None else next_state_p2.copy()
+            # print(env.reward)
 
             state = next_state
-
+        # print(env.reward)
         if env.reward == 1:
+            # print("wassap")
             player1_score['win'] += 1
             player2_score['loss'] += 1
         elif env.reward == 0:
+            # print("There")
             player1_score['draw'] += 1
             player2_score['draw'] += 1
         elif env.reward == -1:
+            # print("Here")
             player1_score['loss'] += 1
             player2_score['win'] += 1
-
+    print(player1_score, player2_score)
     return player1_score['win'] / (n)
 
 # ## Training ##
-for episode in range(10000):
+for episode in range(100000):
     env.reset()
     curr_turn = env.turn
     state= env.board.board.copy()
@@ -191,6 +199,8 @@ for episode in range(10000):
         action_full = np.zeros((1,8), dtype=int)
         action_full[0][7 if action == -1 else action - 1] = 1
         action = torch.from_numpy(action_full)
+
+        next_state = next_state if next_state is None else next_state.copy()
         
         #Simulation of the second player's turn.
         while(env.turn == env.player2 and not done):
@@ -199,7 +209,7 @@ for episode in range(10000):
             action_p2 = select_action_fixed(next_state, EPSILON)
             next_state_p2, _, done = env.makeMove(action_p2)
 
-            next_state = next_state_p2
+            next_state = None if next_state_p2 is None else next_state_p2.copy()
 
         #^Next state is always in the view of north player 
         #Next state should be in the view of the current player for the memory
@@ -227,8 +237,8 @@ for episode in range(10000):
             target_net.load_state_dict(policy_net.state_dict())
 
 print('Complete')
-plt.ioff()
-plt.show()
+#plt.ioff()
 
-torch.save(policy_net.state_dict(), 'policy_net.pth')
-torch.save(target_net.state_dict(), 'target_net.pth')
+
+# torch.save(policy_net.state_dict(), 'policy_net.pth')
+# torch.save(target_net.state_dict(), 'target_net.pth')
