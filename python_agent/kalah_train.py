@@ -40,47 +40,47 @@ class Kalah(object):
     # return next_state (i.e. the board after the move, None if game ended), reward (0 if game not ended), if end of game
     def makeMove(self, action):
 
-        print("make move started")
-        print(f'action: {action}')
+        # print("make move started")
+        # print(f'action: {action}')
 
         self.no_turns += 1
 
         move = None
         if action == -1:
-            print("try to swap")
+            # print("try to swap")
             if self.no_turns != 2:
-                print("illegal swap")
+                # print("illegal swap")
                 return None, -1, True
-            print("swapped")
+            # print("swapped")
             self.swap()
             return self.board.board, self.reward, False
         else:
-            print("create move")
+            # print("create move")
             move = m.Move(self.turn, action)
 
         # if illegal move, then lose
         if not self.isLegalMove(move):
-            print("illegal move")
+            # print("illegal move")
             return None, -1, True
 
         # pick seeds
         seedsToSow = int(self.board.getSeeds(move.getSide(), move.getHole()))
         self.board.setSeeds(move.getSide(), move.getHole(), 0)
-        print(f'seeds to sow: {seedsToSow}')
+        # print(f'seeds to sow: {seedsToSow}')
 
         holes = self.board.getNoOfHoles()
         receivingPits = 2 * holes + 1  # sow into: all holes + 1 store       
         rounds = int(seedsToSow // receivingPits)  # sowing rounds
         extra = int(seedsToSow % receivingPits)  # seeds for the last partial round
         # the first "extra" number of holes get "rounds"+1 seeds, the remaining ones get "rounds" seeds
-        print(f'holes: {holes}')
-        print(f'receivingPits: {receivingPits}')
-        print(f'rounds: {rounds}')
-        print(f'extra: {extra}')
+        # print(f'holes: {holes}')
+        # print(f'receivingPits: {receivingPits}')
+        # print(f'rounds: {rounds}')
+        # print(f'extra: {extra}')
 
         # sow the seeds of the full rounds (if any)
         if rounds != 0:
-            print("more than one round")
+            # print("more than one round")
             for i in range(1, holes+1):
                 self.board.addSeeds(s.Side.NORTH, holes, rounds)
                 self.board.addSeeds(s.Side.SOUTH, holes, rounds)
@@ -89,34 +89,34 @@ class Kalah(object):
         # sow the extra seeds (last round)
         sowSide = move.getSide()
         sowHole = move.getHole()  # 0 means store
-        print(f'sowside: {sowSide}')
-        print(f'sowhole: {sowHole}')
+        # print(f'sowside: {sowSide}')
+        # print(f'sowhole: {sowHole}')
 
         for i in range(extra, 0, -1):
-            print(f'extra {i}')
+            # print(f'extra {i}')
             # go to next pit
             sowHole += 1
-            print(f'sowhole: {sowHole}')
+            # print(f'sowhole: {sowHole}')
             if sowHole == 1:  # last pit was a store
-                print("sowhole = 1")
+                # print("sowhole = 1")
                 sowSide = sowSide.opposite(sowSide)
             if sowHole > holes:
-                print("sowhole > holes")
+                # print("sowhole > holes")
                 if sowSide == move.getSide():
-                    print("sow side = move side")
+                    # print("sow side = move side")
                     sowHole = 0  # sow to the store now
                     self.board.addSeedsToStore(sowSide, 1)
-                    print(self.board.toString())
+                    # print(self.board.toString())
                     continue
                 else:
-                    print("go to other side")
+                    # print("go to other side")
                     sowSide = sowSide.opposite(sowSide)
                     sowHole = 1
             # sow to hole
             self.board.addSeeds(sowSide, sowHole, 1)
             # print(self.board.toString())
 
-        print(self.board.toString())
+        # print(self.board.toString())
         
         # capture
         # last seed was sown on the moving player's side ...
@@ -128,7 +128,7 @@ class Kalah(object):
            self.board.getSeeds(sowSide, sowHole) == 1 and \
            self.board.getSeedsOp(sowSide, sowHole) > 0:
 
-            print("capture")
+            # print("capture")
             self.board.addSeedsToStore(move.getSide(),
                                        1 + self.board.getSeedsOp(move.getSide(), sowHole))
             self.board.setSeeds(move.getSide(), sowHole, 0)
@@ -136,8 +136,8 @@ class Kalah(object):
 
         self.score_player1 = self.get_score(self.player1)
         self.score_player2 = self.get_score(self.player2)
-        print(f'score 1: {self.score_player1}')
-        print(f'score 2: {self.score_player2}')
+        # print(f'score 1: {self.score_player1}')
+        # print(f'score 2: {self.score_player2}')
 
         # game over?
         finishedSide = None
@@ -146,11 +146,11 @@ class Kalah(object):
         elif self.holesEmpty(self.board, move.getSide().opposite(move.getSide())):
             finishedSide = move.getSide().opposite(move.getSide())
 
-        print(f'finished side: {finishedSide}')
+        # print(f'finished side: {finishedSide}')
         
         # game ended
         if finishedSide is not None:
-            print("collecting remaining seeds")
+            # print("collecting remaining seeds")
             # collect the remaining seeds
             seeds = 0
             collectingSide = finishedSide.opposite(finishedSide)
@@ -176,10 +176,10 @@ class Kalah(object):
 
         # whose turn is it?
         if sowHole == 0:  # the store implies (sowSide == move.getSide())
-            print("sowhole = 0")
+            # print("sowhole = 0")
             self.turn = move.getSide()  # move again
         else:
-            print("sowhole != 0")
+            # print("sowhole != 0")
             self.turn = move.getSide().opposite(move.getSide())
         
         # game has not ended

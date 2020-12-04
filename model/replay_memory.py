@@ -13,6 +13,8 @@ class ReplayMemory(object):
             self.memory.append(None)
         
         self.memory[self.position] = self.Transition(*args)
+        self.position = (self.position + 1) % self.capacity
+
 
     def sample(self, batch_size):
         assert batch_size <= len(self.memory)
