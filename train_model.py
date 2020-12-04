@@ -188,7 +188,7 @@ def compete(env, n):
     return player1_score['win'] / (n)
 
 # ## Training ##
-for episode in range(100000):
+for episode in range(1000000):
     env.reset()
     curr_turn = env.turn
     state= env.board.board.copy()
@@ -233,17 +233,18 @@ for episode in range(100000):
 
         #Save target network
         optimize_model()
-        # if done:
-        #     scores.append(env.score_player1 - env.score_player2)
-        #     plot_scores()
+        
     # print(env.score_player1, env.score_player2)
     # print(env.no_turns)
     # print(f"This is the {episode} th Game")
     # print(env.reward)
 
     if episode % TARGET_UPDATE == 0:
-        win_percentage = compete(env, 100) 
+        win_percentage = compete(env, 500) 
         print(win_percentage)
+        print(episode)
+        scores.append(win_percentage)
+        plot_scores()
         if win_percentage > 0.55:
             target_net.load_state_dict(policy_net.state_dict())
 
