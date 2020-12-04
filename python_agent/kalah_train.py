@@ -62,7 +62,8 @@ class Kalah(object):
         # if illegal move, then lose
         if not self.isLegalMove(move):
             # print("illegal move")
-            return None, -1, True
+            self.reward = -1
+            return None, self.reward, True
 
         # pick seeds
         seedsToSow = int(self.board.getSeeds(move.getSide(), move.getHole()))
@@ -184,7 +185,8 @@ class Kalah(object):
             self.turn = move.getSide().opposite(move.getSide())
         
         # game has not ended
-        return self.board.board, 0, False
+        self.reward = 0
+        return self.board.board, self.reward, False
 
 
     def holesEmpty(self, board, side):
