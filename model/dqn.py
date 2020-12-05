@@ -8,11 +8,11 @@ class DQN(nn.Module):
     def __init__(self, input_size, outputs):
         super(DQN, self).__init__()
         #Number of layers
-        self.dense1 = nn.Linear(input_size, input_size)
-        self.dense2 = nn.Linear(input_size, input_size)
-        self.dense3 = nn.Linear(input_size, input_size)
-        self.dense4 = nn.Linear(input_size, input_size)
-        self.dense5 = nn.Linear(input_size, input_size)
+        self.dense1 = nn.Linear(input_size, 64)
+        self.dense2 = nn.Linear(64, 64)
+        self.dense3 = nn.Linear(64, 64)
+        self.dense4 = nn.Linear(64, 64)
+        self.dense5 = nn.Linear(64, input_size)
 
         self.head = nn.Linear(input_size, outputs)
     
