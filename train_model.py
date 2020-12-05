@@ -35,12 +35,15 @@ target_net = dqn.DQN(16,8).to(device).double()         #and 8 actions (SWAP, 7 h
 target_net.load_state_dict(policy_net.state_dict())
 target_net.eval()
 
-BATCH_SIZE = 128
+BATCH_SIZE = 32
 GAMMA = 0.999
-EPSILON = 0.25     #EPSILON start value
+EPSILON_START = 1     #EPSILON start value
+EPSILON_END = 0.1
 TARGET_UPDATE = 1000    #TARGET value for update
+steps_done = 0
+episode = 0 
 
-memory_size = 1000000
+memory_size = 10000000
 optimizer = optim.Adam(policy_net.parameters())
 memory = replay_memory.ReplayMemory(memory_size)
 
@@ -111,7 +114,8 @@ def select_action(state, epsilon):
     #a random value in the range [0,1.0] and if our epsilon
     #is smaller, then we take a random action.
     probability = random.random()
-    if probability <= epsilon:
+    curr_epsilon = EPSILON_START - ((1 - EPSILON_END) * (episode/1000000))
+    if probability <= curr_epsilon:
         #use our policies from target NN
         with torch.no_grad():
             return env.actionspace[torch.argmax(policy_net(state))]
@@ -120,7 +124,8 @@ def select_action(state, epsilon):
 
 def select_action_fixed(state, epsilon):
     probability = random.random()
-    if probability <= epsilon:
+    curr_epsilon = EPSILON_START - ((1 - EPSILON_END) * (episode/1000000))
+    if probability <= curr_epsilon:
         #use our policies from target NN
         with torch.no_grad():
             return env.actionspace[torch.argmax(target_net(state))]
@@ -167,6 +172,7 @@ def compete(env, n):
 
                 next_state = None if next_state_p2 is None else next_state_p2.copy()
                 # print(next_state)
+               
 
             state = next_state
         
@@ -198,7 +204,7 @@ for episode in range(1000000):
         #Make move in environment
         state_curr = state.copy()
         state_curr = board_view_player(state_curr, env.player1).to(device)
-        action = select_action(state_curr, EPSILON)
+        action = select_action(state_curr, EPSILON_START)
         next_state, reward, done = env.makeMove(action)  #State is 2D here
         reward = torch.tensor([reward]).to(device)
 
@@ -208,15 +214,17 @@ for episode in range(1000000):
         action = torch.from_numpy(action_full).to(device)
 
         next_state = next_state if next_state is None else next_state.copy()
+        steps_done += 1
         
         #Simulation of the second player's turn.
         while(env.turn == env.player2 and not done):
             #Simulate the turn(s) for the second player
             next_state = board_view_player(next_state, env.player2).to(device)
-            action_p2 = select_action_fixed(next_state, EPSILON)
+            action_p2 = select_action_fixed(next_state, EPSILON_START)
             next_state_p2, _, done = env.makeMove(action_p2)
 
             next_state = None if next_state_p2 is None else next_state_p2.copy()
+            steps_done += 1
 
         #^Next state is always in the view of north player 
         #Next state should be in the view of the current player for the memory
@@ -246,6 +254,7 @@ for episode in range(1000000):
         scores.append(win_percentage)
         plot_scores()
         if win_percentage > 0.55:
+            print("WE DID IT")
             target_net.load_state_dict(policy_net.state_dict())
 
 print('Complete')
