@@ -122,7 +122,7 @@ def select_action(state, epsilon):
         #use our policies from target NN
         with torch.no_grad():
             x = policy_net(state)
-            print(x)
+            # print(x)
             return env.actionspace[torch.argmax(x)]
         
 
