@@ -12,6 +12,7 @@ class Kalah(object):
 
         self.actionspace = [1,2,3,4,5,6,7,-1]
         self.actionspace_size = len(self.actionspace)
+        self.actionspace_legal = []
         
         # Reward
         self.reward_player1 = 0
@@ -27,6 +28,16 @@ class Kalah(object):
         self.score_player2 = 0
         self.no_turns = 0
 
+    def getLegalActionState(self):
+        legal_moves_in_board = []
+        for i in range(1,8):
+            if self.board.getSeeds(self.player2, i) != 0:
+                legal_moves_in_board.append(i)
+
+        if self.turn == 2:
+            legal_moves_in_board.append(-1)
+        
+        return legal_moves_in_board
 
     def getBoard(self):
         return self.board
@@ -69,6 +80,8 @@ class Kalah(object):
                 self.reward = -1
             else:
                 self.reward = 1
+
+            # print("{} {}", self.turn==self.player1, self.reward)
             return None, self.reward, True
 
         # pick seeds
@@ -171,13 +184,9 @@ class Kalah(object):
             self.score_player2 = self.get_score(self.player2)
 
             self.reward = 0
-            if self.score_player1 > self.score_player2 and move.getSide() == self.player1:
+            if self.score_player1 > self.score_player2:
                 self.reward = 1
-            elif self.score_player1 < self.score_player2 and move.getSide() == self.player1:
-                self.reward = -1
-            elif self.score_player2 > self.score_player1 and move.getSide() == self.player2:
-                self.reward = 1
-            elif self.score_player2 < self.score_player1 and move.getSide() == self.player2:
+            elif self.score_player1 < self.score_player2:
                 self.reward = -1
 
             return None, self.reward, True

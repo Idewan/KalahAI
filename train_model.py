@@ -39,7 +39,7 @@ BATCH_SIZE = 32
 GAMMA = 0.999
 EPSILON_START = 1     #EPSILON start value
 EPSILON_END = 0.1
-TARGET_UPDATE = 1000    #TARGET value for update
+TARGET_UPDATE = 250    #TARGET value for update
 steps_done = 0
 episode = 0 
 
@@ -106,7 +106,7 @@ def optimize_model():
     optimizer.zero_grad()
     loss.backward()
     for param in policy_net.parameters():
-        param.grad.clamp_(-1,1)
+        param.grad.data.clamp_(-1,1)
     optimizer.step()
 
 def select_action(state, epsilon):
@@ -114,23 +114,30 @@ def select_action(state, epsilon):
     #a random value in the range [0,1.0] and if our epsilon
     #is smaller, then we take a random action.
     probability = random.random()
-    curr_epsilon = EPSILON_START - ((1 - EPSILON_END) * (episode/1000000))
+    curr_epsilon = EPSILON_START - ((1 - EPSILON_END) * (episode/1000000)) if epsilon != 0 else -1
     if probability <= curr_epsilon:
+        y = env.actionspace[random.randrange(n_actions)]
+        return y
+    else:
         #use our policies from target NN
         with torch.no_grad():
-            return env.actionspace[torch.argmax(policy_net(state))]
-    else:
-        return env.actionspace[random.randrange(n_actions)]
+            x = policy_net(state)
+            print(x)
+            return env.actionspace[torch.argmax(x)]
+        
 
 def select_action_fixed(state, epsilon):
     probability = random.random()
-    curr_epsilon = EPSILON_START - ((1 - EPSILON_END) * (episode/1000000))
+    curr_epsilon = EPSILON_START - ((1 - EPSILON_END) * (episode/1000000)) if epsilon != 0 else -1
     if probability <= curr_epsilon:
+        action_space = env.getLegalActionState()
+        y = action_space[random.randrange(len(action_space))]
+        return y
+    else:
         #use our policies from target NN
         with torch.no_grad():
-            return env.actionspace[torch.argmax(target_net(state))]
-    else:
-        return env.actionspace[random.randrange(n_actions)]
+            x = target_net(state)
+            return env.actionspace[torch.argmax(x)]
 
 #Player's side
 #Let's say NORTH - 0 side SOUTH - 1
@@ -190,11 +197,11 @@ def compete(env, n):
             # print("Here")
             player1_score['loss'] += 1
             player2_score['win'] += 1
-    # print(player1_score, player2_score)
+    print(player1_score, player2_score)
     return player1_score['win'] / (n)
 
 # ## Training ##
-for episode in range(1000000):
+for episode in range(3000000):
     env.reset()
     curr_turn = env.turn
     state= env.board.board.copy()
@@ -248,11 +255,11 @@ for episode in range(1000000):
     # print(env.reward)
 
     if episode % TARGET_UPDATE == 0:
-        win_percentage = compete(env, 500) 
+        win_percentage = compete(env, 300) 
         print(win_percentage)
         print(episode)
-        scores.append(win_percentage)
-        plot_scores()
+        # scores.append(win_percentage)
+        # plot_scores()
         if win_percentage > 0.55:
             print("WE DID IT")
             target_net.load_state_dict(policy_net.state_dict())
@@ -261,5 +268,5 @@ print('Complete')
 #plt.ioff()
 
 
-torch.save(policy_net.state_dict(), 'policy_net.pth')
-torch.save(target_net.state_dict(), 'target_net.pth')
+torch.save(policy_net.state_dict(), 'policy_net32.pth')
+torch.save(target_net.state_dict(), 'target_net32.pth')
