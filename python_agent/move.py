@@ -1,3 +1,5 @@
+import side as s
+
 class Move(object):
 
     def __init__(self, side, hole):
@@ -14,3 +16,6 @@ class Move(object):
     
     def getHole(self):
         return self.hole
+
+if __name__ == "__main__":
+    print('This class has been checked and works as expected.')

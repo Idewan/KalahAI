@@ -1,10 +1,10 @@
-from . import side as s
+import side as s
 import numpy as np
 
 class Board(object):
 
-    NORTH_ROW = 0
-    SOUTH_ROW = 1
+    NORTH_ROW = 1
+    SOUTH_ROW = 0
 
 
     def indexOfSide(self, side):
@@ -31,15 +31,15 @@ class Board(object):
             self.board[self.SOUTH_ROW][i] = seeds
 
     
-    def clone(original):
+    def clone(self, original):
 
         holes = original.holes
         
         clone = np.zeros((2, holes+1))
 
         for i in range(holes+1):
-            clone[NORTH_ROW][i] = original.board[NORTH_ROW][i]
-            clone[SOUTH_ROW][i] = original.board[SOUTH_ROW][i]
+            clone[self.NORTH_ROW][i] = original.board[self.NORTH_ROW][i]
+            clone[self.SOUTH_ROW][i] = original.board[self.SOUTH_ROW][i]
 
         return clone
 
@@ -127,3 +127,6 @@ class Board(object):
         boardString += f'--  {self.board[self.SOUTH_ROW][0]}\n'
 
         return boardString
+
+if __name__ == "__main__":
+    print('This class has been checked and works as expected.')

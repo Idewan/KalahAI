@@ -2,7 +2,7 @@ import board as b
 import side as s
 import move as m
 
-# TODO IMPORTANT: DEBUG
+# TODO CHECK AND DEBUG THIS CLASS
 
 class Kalah(object):
 

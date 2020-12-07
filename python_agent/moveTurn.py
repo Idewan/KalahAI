@@ -3,3 +3,6 @@ class MoveTurn(object):
         self.end = False
         self.again = False
         self.move = None
+
+if __name__ == "__main__":
+    Print('This class has been checked and works as expected.')

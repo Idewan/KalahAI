@@ -1,6 +1,8 @@
-from . import moveTurn as mt
-from . import side as s
+import moveTurn as mt
+import side as s
 import invalidMessageException as ime
+
+# TODO: CHECK AND DEBUG THIS CLASS
 
 class protocol(object):
 
