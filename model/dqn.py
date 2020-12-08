@@ -8,9 +8,14 @@ class DQN(nn.Module):
     def __init__(self, input_size, outputs):
         super(DQN, self).__init__()
         #Number of layers
-
         self.nn = nn.Sequential(
             nn.Linear(input_size, 128),
+            nn.ReLU(),
+            nn.Linear(128, 128),
+            nn.ReLU(),
+            nn.Linear(128, 128),
+            nn.ReLU(),
+            nn.Linear(128, 128),
             nn.ReLU(),
             nn.Linear(128, 128),
             nn.ReLU(),

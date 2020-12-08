@@ -25,7 +25,8 @@ if is_ipython:
     from IPython import display
 plt.ion()
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print(torch.cuda.is_available())
 scores = []
 
 #ENVIRONMENT SPECIFC
@@ -37,14 +38,15 @@ target_net.eval()
 
 BATCH_SIZE = 32
 GAMMA = 0.999
+CHECKPOINT = 100000
 EPSILON_START = 1     #EPSILON start value
 EPSILON_END = 0.1
-TARGET_UPDATE = 250    #TARGET value for update
+TARGET_UPDATE = 2500    #TARGET value for update
 steps_done = 0
 episode = 0 
 
 memory_size = 10000000
-optimizer = optim.Adam(policy_net.parameters())
+optimizer = optim.RMSprop(policy_net.parameters())
 memory = replay_memory.ReplayMemory(memory_size)
 
 def plot_scores():
@@ -78,8 +80,7 @@ def optimize_model():
     state_batch = torch.reshape(state_batch, (BATCH_SIZE, 16)).to(device)
 
     #Compute the state-action pair Q(s',a)
-    # print(torch.tensor(action, dtype=torch.int64))
-    state_action_values = policy_net(state_batch).gather(1, action.type(torch.int64))
+    state_action_values = policy_net(state_batch).gather(1, action_batch)
     
     #Changed
     #V(s_t+1)
@@ -142,7 +143,7 @@ def select_action_fixed(state, epsilon):
 #Player's side
 #Let's say NORTH - 0 side SOUTH - 1
 def board_view_player(board, curr_turn):
-    if curr_turn == Side.SOUTH:
+    if curr_turn == Side.NORTH:
         board[[0,1]] = board[[1,0]]
     board = torch.from_numpy(board.flatten())
     return board
@@ -155,8 +156,8 @@ def compete(env, n):
 
     for episode in range(n):
         env.reset()
-        # print(f"*********** Game {episode} ***********")
-        # print(env.board.toString())
+#         print(f"*********** Game {episode} ***********")
+        #print(env.board.toString())
         state = env.board.board.copy()
         done = False
         while(not done):
@@ -164,7 +165,7 @@ def compete(env, n):
             state = board_view_player(state, env.player1).to(device)
             # print(state)
             action = select_action(state, 0)
-            # print("Action Player 1: {}".format(action))
+#             print("Action Player 1: {}".format(action))
             next_state, _, done = env.makeMove(action)  #State is 2D here
             next_state = next_state if next_state is None else next_state.copy()
             # print(next_state)
@@ -174,7 +175,7 @@ def compete(env, n):
                 next_state = board_view_player(next_state, env.player2).to(device)
                 # print(next_state)
                 action_p2 = select_action_fixed(next_state, 0)
-                # print("Action Player 2: {}".format(action_p2))
+#                 print("Action Player 2: {}".format(action_p2))
                 next_state_p2, _, done = env.makeMove(action_p2)
 
                 next_state = None if next_state_p2 is None else next_state_p2.copy()
@@ -184,7 +185,7 @@ def compete(env, n):
             state = next_state
         
         # print(f'Done state: {state}')
-        # print(f'Reward: {env.reward}')
+#         print(f'Reward: {env.reward}')
         if env.reward == 1:
             # print("wassap")
             player1_score['win'] += 1
@@ -213,12 +214,9 @@ for episode in range(3000000):
         state_curr = board_view_player(state_curr, env.player1).to(device)
         action = select_action(state_curr, EPSILON_START)
         next_state, reward, done = env.makeMove(action)  #State is 2D here
-        reward = torch.tensor([reward]).to(device)
+        reward = torch.tensor([reward], device=device)
 
-        #Transition action to proper format
-        action_full = np.zeros((1,8), dtype=int)
-        action_full[0][7 if action == -1 else action - 1] = 1
-        action = torch.from_numpy(action_full).to(device)
+        action = torch.tensor([[7 if action == - 1 else action-1]], device=device)
 
         next_state = next_state if next_state is None else next_state.copy()
         steps_done += 1
@@ -263,10 +261,12 @@ for episode in range(3000000):
         if win_percentage > 0.55:
             print("WE DID IT")
             target_net.load_state_dict(policy_net.state_dict())
+    if episode % CHECKPOINT == 0:
+        torch.save(policy_net.state_dict(), 'policy_net_checkpoint.pth')
+        torch.save(target_net.state_dict(), 'target_net_checkpoint.pth')
 
 print('Complete')
 #plt.ioff()
-
 
 torch.save(policy_net.state_dict(), 'policy_net32.pth')
 torch.save(target_net.state_dict(), 'target_net32.pth')
