@@ -32,13 +32,15 @@ scores = []
 #ENVIRONMENT SPECIFC
 n_actions=env.actionspace_size
 policy_net = dqn.DQN(16,8).to(device).double()             #Board has 16 inputs
+policy_net.load_state_dict(torch.load("6_policy_net_checkpoint.pth", map_location=device))
 target_net = dqn.DQN(16,8).to(device).double()         #and 8 actions (SWAP, 7 holes)
 target_net.load_state_dict(policy_net.state_dict())
+target_net.load_state_dict(torch.load("6_target_net_checkpoint.pth", map_location=device))
 target_net.eval()
 
 BATCH_SIZE = 32
 GAMMA = 0.999
-CHECKPOINT = 100000
+CHECKPOINT = 50000
 EPSILON_START = 1     #EPSILON start value
 EPSILON_END = 0.1
 TARGET_UPDATE = 2500    #TARGET value for update
@@ -115,7 +117,12 @@ def select_action(state, epsilon):
     #a random value in the range [0,1.0] and if our epsilon
     #is smaller, then we take a random action.
     probability = random.random()
-    curr_epsilon = EPSILON_START - ((1 - EPSILON_END) * (episode/1000000)) if epsilon != 0 else -1
+    if epsilon > 0.1:
+        curr_epsilon = EPSILON_START - ((1 - EPSILON_END) * (episode/1000000))
+    elif epsilon == 0.1:
+        curr_epsilon = epsilon
+    else:
+        curr_epsilon = -1 
     if probability <= curr_epsilon:
         y = env.actionspace[random.randrange(n_actions)]
         return y
@@ -164,22 +171,22 @@ def compete(env, n):
             # Make move in environment
             state = board_view_player(state, env.player1).to(device)
             # print(state)
-            action = select_action(state, 0)
-#             print("Action Player 1: {}".format(action))
+            action = select_action(state, 0.1)
+            print("Action Player 1: {}".format(action))
             next_state, _, done = env.makeMove(action)  #State is 2D here
             next_state = next_state if next_state is None else next_state.copy()
-            # print(next_state)
+            print(next_state)
 
             while(env.turn == env.player2 and not done):
                 #Simulate the turn(s) for the second player
                 next_state = board_view_player(next_state, env.player2).to(device)
                 # print(next_state)
-                action_p2 = select_action_fixed(next_state, 0)
-#                 print("Action Player 2: {}".format(action_p2))
+                action_p2 = select_action_fixed(next_state, 0.1)
+                print("Action Player 2: {}".format(action_p2))
                 next_state_p2, _, done = env.makeMove(action_p2)
 
                 next_state = None if next_state_p2 is None else next_state_p2.copy()
-                # print(next_state)
+
                
 
             state = next_state
@@ -202,7 +209,7 @@ def compete(env, n):
     return player1_score['win'] / (n)
 
 # ## Training ##
-for episode in range(3000000):
+for episode in range(100000):
     env.reset()
     curr_turn = env.turn
     state= env.board.board.copy()
@@ -212,7 +219,7 @@ for episode in range(3000000):
         #Make move in environment
         state_curr = state.copy()
         state_curr = board_view_player(state_curr, env.player1).to(device)
-        action = select_action(state_curr, EPSILON_START)
+        action = select_action(state_curr, 0.1)
         next_state, reward, done = env.makeMove(action)  #State is 2D here
         reward = torch.tensor([reward], device=device)
 
