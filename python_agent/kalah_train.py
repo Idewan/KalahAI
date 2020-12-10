@@ -26,6 +26,18 @@ class Kalah(object):
         self.score_player2 = 0
         self.no_turns = 0
 
+
+    def getLegalMoves(self):
+        legal_moves = self.getLegalActionState()
+        legal_moves_bin = [0] * 8
+        for m in legal_moves:
+            if m != -1:
+                legal_moves_bin[m] = 1
+            else:
+                legal_moves_bin[0] = 1
+        return legal_moves_bin
+
+
     def getLegalActionState(self):
         legal_moves_in_board = []
         for i in range(1,8):
@@ -188,6 +200,26 @@ class Kalah(object):
     
     def gameOver(self):
         return self.holesEmpty(self.board, s.Side.NORTH) or holesEmpty(self.board, s.Side.SOUTH)
+    
+    
+    def getGameOver(self, player):
+        if self.gameOver():
+            if player == self.player1:
+                if self.get_score(self.player1) > self.get_score(self.player2):
+                    return 1
+                elif self.get_score(self.player1) < self.get_score(self.player2):
+                    return -1
+                else:
+                    return 1e-4
+            elif player == self.player2:
+                if self.get_score(self.player1) < self.get_score(self.player2):
+                    return 1
+                elif self.get_score(self.player1) > self.get_score(self.player2):
+                    return -1
+                else:
+                    return 1e-4
+        else:
+            return 0
 
 
     def reset(self):
