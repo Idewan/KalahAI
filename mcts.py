@@ -66,8 +66,8 @@ class MCTS():
 
         # the state is a leaf node (or has not been expanded yet)
         if state not in self.P:
-            # TODO fix board (call board_view_player?)
-            self.P[state], value = self.net.predict(state)  # this gives the policy vector and the value for the current player
+            state_np = self.net.board_view_player(state, player)
+            self.P[state], value = self.net.predict(state_np)  # this gives the policy vector and the value for the current player
             legal_actions = self.game.getLegalMoves()
             # masking out invalid actions
             self.P[state] = self.P[state] * legal_actions
