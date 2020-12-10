@@ -2,6 +2,7 @@ import math
 import logging
 import numpy as np
 
+sys.path.append('../')
 from python_agent.kalah_train import Kalah
 from python_agent.board import Board
 from python_agent.side import Side
