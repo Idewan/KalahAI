@@ -50,7 +50,7 @@ class KalahNetTrain(object):
         optimizer = optim.Adam(self.nnet.parameters())
 
         for epoch in range(self.epochs):
-            print(f'EPOCH: 1 {epoch +1}')
+            print(f'EPOCH: {epoch +1}')
 
             batch_count = int(len(memory) / self.batch_size)
 
@@ -71,7 +71,7 @@ class KalahNetTrain(object):
                 #Compute current pi and values given current nn
                 output_pi, output_v = self.nnet(s)
                 l_pi = self.loss_pi(pi, output_pi)
-                l_v = self.loss_pi(v, output_v)
+                l_v = self.loss_v(v, output_v)
                 loss = l_v + l_pi
 
                 #Compute gradient and perform single step
@@ -105,7 +105,7 @@ class KalahNetTrain(object):
         """
         s = env.board.board.copy()
         p = self.env.turn
-        if p != Side.SOUTH:
+        if p == Side.NORTH:
             s[[0,1]] = s[[1,0]]
         
         s = s.astype(np.float64)
