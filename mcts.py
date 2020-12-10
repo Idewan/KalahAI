@@ -44,6 +44,7 @@ class MCTS():
             probs[best_action] = 1
             return probs
 
+        counts = [x ** (1. / tau) for x in counts]
         counts_sum = float(sum(counts))
         probs = [x / counts for x in counts]
         return probs
