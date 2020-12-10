@@ -66,7 +66,7 @@ class KalahNetTrain(object):
                 v = torch.cat(batch.v)
 
                 if self.is_cuda:
-                    s, pi, v = s.contiguous().cuda(), pi.contiguous().cuda(), v.contiguous.cuda()
+                    s, pi, v = s.contiguous().cuda(), pi.contiguous().cuda(), v.contiguous().cuda()
 
                 #Compute current pi and values given current nn
                 output_pi, output_v = self.nnet(s)
@@ -86,15 +86,15 @@ class KalahNetTrain(object):
             :param s: current state (kalah board) - view corrected
         """
         #Preparing input
-        self.nnet.eval
-        s = s.contiguous.cuda() if self.is_cuda else s
+        self.nnet.eval()
+        s = s.contiguous().cuda() if self.is_cuda else s
         with torch.no_grad:
             pi, v = self.nnet(s)
         
         return torch.exp(pi).data.cpu().numpy()[0], v.data.cpu().numpy()[0]
 
     
-    def board_view_player(self):
+    def board_view_player(self, board=None, turn=None):
         """
             The board, [[side.South], [side.North]], is always south facing.
             This methods returns the board so that is facing that the current
@@ -103,8 +103,9 @@ class KalahNetTrain(object):
             :param board: Kalah board
             :return: returns Board facing correctly for the current player's turn
         """
-        s = env.board.board.copy()
-        p = self.env.turn
+        s = self.env.board.board.copy() if board is not None else board.copy()
+        p = self.env.turn if turn is not None else turn
+
         if p == Side.NORTH:
             s[[0,1]] = s[[1,0]]
         
