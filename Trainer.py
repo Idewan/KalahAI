@@ -2,6 +2,7 @@ import logging as log
 import torch
 import random
 import numpy as np
+import time
 
 from KalahModel.KalahNetTrain import KalahNetTrain
 from KalahModel.MCTS import MCTS
@@ -25,8 +26,8 @@ class Trainer():
         self.game = game
         self.net = net
         self.memory = Memory(200000)
-        self.num_eps = 100
-        self.num_iters = 100
+        self.num_eps = 5
+        self.num_iters = 10
         self.mcts_sims = 25
         self.opp_nnet = KalahNetTrain(game, BATCH_SIZE, DEVICE, EPOCHS, LR, DROPOUT)
         self.threshold = 0.55
@@ -37,11 +38,13 @@ class Trainer():
 
         for i in range(self.num_iters):
             for e in range(self.num_eps):
+                self.game.reset()
+                print(f"Executing episode {e}")
                 self.executeEpisode()
             
             # back up of the memory
             log.info("Saving back-up of the memory")
-            self.save_training_memory(f"checkpoint_{i}")
+            # self.save_training_memory(f"checkpoint_{i}")
             
             nnet_name = "checkpoints/checkpoint_{}.pth".format(i)
             temp_name = "checkpoints/temp.pth"
@@ -51,6 +54,7 @@ class Trainer():
             opp_mcts = MCTS(self.game, self.opp_nnet)
 
             log.info("Training ...")
+            print("Training...")
             self.net.train(self.memory)
             curr_mcts = MCTS(self.game, self.net)
 
@@ -73,7 +77,7 @@ class Trainer():
     
 
     def executeEpisode(self):
-
+        start = time.time()
         examples = []
         mcts = MCTS(self.game, self.net)
         state = self.game.board.board
@@ -95,7 +99,9 @@ class Trainer():
                         self.memory.push(ex[0], ex[1], reward)
                     else:
                         self.memory.push(ex[0], ex[1], -reward)
+                print("TIME TAKEN EPSIODE: {:.3f}".format(time.time()-start))
                 return
+       
 
 
     def load_training_memory(self, filename):

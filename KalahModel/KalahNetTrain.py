@@ -59,7 +59,6 @@ class KalahNetTrain(object):
             for _ in t:
                 transitions = memory.sample(self.batch_size)
                 batch = memory.Transition(*zip(*transitions))
-
                 #Sequence batch into states, pi, values
                 s = torch.cat(batch.state)
                 pi = torch.cat(batch.pi)
@@ -128,19 +127,17 @@ class KalahNetTrain(object):
         """
         return torch.sum((targets - outputs.view(-1)) ** 2) / targets.size()[0]
 
-    def save_model_checkpoint(self, filename, title):
+    def save_model_checkpoint(self, path):
         """
             :param filename: name of the file/dir
             :param title: title of the weights file
         """
-        path = f"{filename}/{title}"
         torch.save(self.nnet.state_dict(), path)
 
-    def load_model_checkpoint(self, filename, title):
+    def load_model_checkpoint(self, path):
         """
             :param filename: name of the file/dir
             :param title: title of the weights file
         """
-        path = f"{filename}/{title}"
-        state_dict = pytorch.load(path, map_location= None if self.is_cuda else 'cpu')
+        state_dict = torch.load(path, map_location= None if self.is_cuda else 'cpu')
         self.nnet.load_state_dict(state_dict)

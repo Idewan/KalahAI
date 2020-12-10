@@ -3,7 +3,6 @@ import copy
 import logging as log
 import numpy as np
 
-sys.path.append('../')
 from python_agent.kalah_train import Kalah
 from python_agent.board import Board
 from python_agent.side import Side
@@ -37,10 +36,11 @@ class MCTS():
         state = self.game.board
 
         for i in range(self.no_mcts):
-            self.search(game, self.net)
+            self.search(self.game, self.net)
 
         counts = [self.N_sa[(state, action)] if (state, action) in self.N_sa else 0 for action in range(self.game.actionspace_size)]
-
+        # print(counts)
+  
         if tau == 0:
             best_actions = np.array(np.argwhere(counts == np.max(counts))).flatten()
             best_action = np.random.choice(best_actions)
@@ -55,10 +55,15 @@ class MCTS():
 
 
     def search(self, game, net):
+
+        # print("***** Start MCTS *****")
         
         # player and board at the root of the tree
         player = game.turn
         state = game.board
+
+        # print(f'Player {player}')
+        # print(f'State {state}')
 
         # create an independent copy of the game, so that when i run the simulation they will not change the original game
         game_copy = copy.deepcopy(game)
@@ -69,7 +74,7 @@ class MCTS():
         if self.end_states[state] != 0:
             return self.end_states[state]
 
-        # the state is a leaf node (or has not been expanded yet) A
+        # the state is a leaf node (or has not been expanded yet)
         if state not in self.P:
             state_np = self.net.board_view_player(state, player)
             self.P[state], value = self.net.predict(state_np)  # this gives the policy vector and the value for the current player
