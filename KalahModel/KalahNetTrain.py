@@ -3,7 +3,7 @@ import sys
 import numpy as np
 
 from tqdm import tqdm 
-from KalahNet import KalahNet as kalahnet
+from . import KalahNet as kn
 
 sys.path.append('../')
 from python_agent.side import Side
@@ -29,7 +29,7 @@ class KalahNetTrain(object):
         #Initialize neural net
         self.device = device
         self.is_cuda = torch.cuda.is_available()
-        self.nnet = kalahnet(7, dropout).to(self.device)
+        self.nnet = kn.KalahNet(7, dropout).to(self.device).double()
         self.env = env
 
         #Training parameters
@@ -88,8 +88,8 @@ class KalahNetTrain(object):
         #Preparing input
         self.nnet.eval()
         s = s.contiguous().cuda() if self.is_cuda else s
-        with torch.no_grad:
-            pi, v = self.nnet(s)
+        with torch.no_grad():
+            pi, v = self.nnet(s.double().unsqueeze(0))
         
         return torch.exp(pi).data.cpu().numpy()[0], v.data.cpu().numpy()[0]
 

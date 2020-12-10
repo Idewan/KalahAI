@@ -1,7 +1,7 @@
 from collections import namedtuple
 import random
 
-class ReplayMemory(object):
+class Memory(object):
     def __init__(self,capacity=1000000):
         self.capacity = capacity
         self.memory = []

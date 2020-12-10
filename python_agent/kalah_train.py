@@ -21,6 +21,7 @@ class Kalah(object):
         self.player1 = s.Side.SOUTH
         self.player2 = s.Side.NORTH
         self.turn = self.player1
+        self.prev_player = self.player1
 
         self.score_player1 = 0
         self.score_player2 = 0
@@ -199,7 +200,7 @@ class Kalah(object):
 
     
     def gameOver(self):
-        return self.holesEmpty(self.board, s.Side.NORTH) or holesEmpty(self.board, s.Side.SOUTH)
+        return self.holesEmpty(self.board, s.Side.NORTH) or self.holesEmpty(self.board, s.Side.SOUTH)
     
     
     def getGameOver(self, player):
