@@ -45,7 +45,7 @@ class Kalah(object):
             if self.board.getSeeds(self.turn, i) != 0:
                 legal_moves_in_board.append(i)
 
-        if self.no_turns == 2:
+        if self.no_turns == 1:
             legal_moves_in_board.append(-1)
         
         return legal_moves_in_board
@@ -85,7 +85,7 @@ class Kalah(object):
 
         # if illegal move, then lose
         if not self.isLegalMove(move):
-            print("ILLEGAL MOVE")
+            # print("ILLEGAL MOVE")
             if self.turn == self.player1:
                 self.reward = -1
             else:
@@ -232,6 +232,8 @@ class Kalah(object):
         s = self.player1
         self.player1 = self.player2
         self.player2 = s
+        # self.turn = self.player2
+        #BUG NEED TO CHANGE TURN
 
 
     def get_score(self, side):

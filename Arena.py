@@ -26,16 +26,16 @@ class Arena():
             else:
                 curPlayer = 1
 
-            print(self.game.board.toString())
-            print(self.game.turn)
-            print(self.game.player1)
-            print(curPlayer)
+            # print(self.game.board.toString())
+            # print(self.game.turn)
+            # print(self.game.player1)
+            # print(curPlayer)
 
             action = players[curPlayer](self.game)
 
             valids = self.game.getLegalMoves()
-            print(valids)
-            print(self.game.turn)
+            # print(valids)
+            # print(self.game.turn)
 
             if valids[action] == 0:
                 print(f'Action {action} is not valid!')

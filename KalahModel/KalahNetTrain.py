@@ -107,7 +107,7 @@ class KalahNetTrain(object):
             :param board: Kalah board
             :return: returns Board facing correctly for the current player's turn
         """
-        s = self.env.board.board.copy() if board is None else board.board
+        s = self.env.board.board.copy() if board is None else board.board.copy()
         p = self.env.turn if turn is None else turn
 
         if p == Side.NORTH:

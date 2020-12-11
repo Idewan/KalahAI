@@ -27,8 +27,8 @@ class Trainer():
         self.game = game
         self.net = net
         self.memory = Memory(200000)
-        self.num_eps = 1
-        self.num_iters = 1
+        self.num_eps = 10
+        self.num_iters = 10
         self.mcts_sims = 25
         self.opp_nnet = KalahNetTrain(game, BATCH_SIZE, DEVICE, EPOCHS, LR, DROPOUT)
         self.threshold = 0.6
@@ -39,12 +39,13 @@ class Trainer():
 
         for i in range(self.num_iters):
             for e in range(self.num_eps):
+                # reset and execute episode, i.e. one game using MCTS
                 self.game.reset()
                 print(f"Executing episode {e}")
                 self.executeEpisode()
             
             # back up of the memory
-            log.info("Saving back-up of the memory")
+            # log.info("Saving back-up of the memory")
             # self.save_training_memory(f"checkpoint_{i}")
             
             nnet_name = "checkpoints/checkpoint_{}.pth".format(i)
@@ -52,6 +53,7 @@ class Trainer():
             self.net.save_model_checkpoint(temp_name)
             self.opp_nnet.load_model_checkpoint(temp_name)
 
+            # MCTS for the opponent
             opp_mcts = MCTS(self.game, self.opp_nnet)
 
             log.info("Training ...")
@@ -66,7 +68,7 @@ class Trainer():
             n_win, n_draw, n_lose = arena.playGames(NUM_GAMES)
 
             print(f"Wins: {n_win} Draws: {n_draw}, Losses: {n_lose}")
-            if float(n_win / (n_draw + n_lose + n_win)) >= self.threshold:
+            if float(n_win / (n_draw + n_lose + n_win)) < self.threshold:
                 print('Old model still better')
                 self.net.load_model_checkpoint(temp_name)
             else:
@@ -102,9 +104,12 @@ class Trainer():
 
             reward = self.game.getGameOver(self.game.turn)
             # print(f'reward: {reward}')
+            #  = self.game.score_player1
+            #  = self.game.score_player2
             
 
             if reward != 0:
+
                 for ex in examples:
                     if (current_turn == ex[2]):
                         reward_torch = torch.tensor([[float(reward)]])
@@ -136,6 +141,7 @@ class Trainer():
             Pickler(f).dump(self.memory.memory)
 
 if __name__ == "__main__":
+    # filenames for NeuralNet and Examples
     filename_nn = str(input())
     filename_ex = str(input())
  
@@ -150,10 +156,10 @@ if __name__ == "__main__":
     if filename_nn:
         kalahnn.nnet.load_model_checkpoint(filename_nn)
 
-    #initialize the trainer
+    # initialize the trainer
     t = Trainer(game, kalahnn)
 
-    #check whether memory exist to take from
+    # check whether memory exist to take from
     if filename_nn:
         t.load_training_memory(filename_nn)
 
