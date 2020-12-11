@@ -21,6 +21,7 @@ class Kalah(object):
         self.player1 = s.Side.SOUTH
         self.player2 = s.Side.NORTH
         self.turn = self.player1
+        self.prev_player = self.player1
 
         self.score_player1 = 0
         self.score_player2 = 0
@@ -41,10 +42,10 @@ class Kalah(object):
     def getLegalActionState(self):
         legal_moves_in_board = []
         for i in range(1,8):
-            if self.board.getSeeds(self.player2, i) != 0:
+            if self.board.getSeeds(self.turn, i) != 0:
                 legal_moves_in_board.append(i)
 
-        if self.turn == 2:
+        if self.no_turns == 1:
             legal_moves_in_board.append(-1)
         
         return legal_moves_in_board
@@ -84,11 +85,11 @@ class Kalah(object):
 
         # if illegal move, then lose
         if not self.isLegalMove(move):
+            # print("ILLEGAL MOVE")
             if self.turn == self.player1:
                 self.reward = -1
             else:
                 self.reward = 1
-
             return None, self.reward, True
 
         # pick seeds
@@ -176,7 +177,7 @@ class Kalah(object):
             elif self.score_player1 < self.score_player2:
                 self.reward = -1
 
-            return None, self.reward, True
+            return self.board.board, self.reward, True
 
         # whose turn is it?
         if self.no_turns == 1:
@@ -199,7 +200,7 @@ class Kalah(object):
 
     
     def gameOver(self):
-        return self.holesEmpty(self.board, s.Side.NORTH) or holesEmpty(self.board, s.Side.SOUTH)
+        return self.holesEmpty(self.board, s.Side.NORTH) or self.holesEmpty(self.board, s.Side.SOUTH)
     
     
     def getGameOver(self, player):
@@ -231,6 +232,8 @@ class Kalah(object):
         s = self.player1
         self.player1 = self.player2
         self.player2 = s
+        # self.turn = self.player2
+        #BUG NEED TO CHANGE TURN
 
 
     def get_score(self, side):
