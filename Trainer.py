@@ -10,6 +10,7 @@ from KalahModel.Memory import Memory
 
 from python_agent.kalah_train import Kalah
 from python_agent.board import Board
+import Arena as bitchcage
 
 from pickle import Pickler, Unpickler
 
@@ -17,8 +18,8 @@ BATCH_SIZE = 64
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 EPOCHS = 10 
 LR = 0.001
-DROPOUT = 0.3
-NUM_GAMES = 500
+DROPOUT = 0.5
+NUM_GAMES = 40
 
 class Trainer():
     
@@ -26,11 +27,11 @@ class Trainer():
         self.game = game
         self.net = net
         self.memory = Memory(200000)
-        self.num_eps = 5
-        self.num_iters = 10
+        self.num_eps = 1
+        self.num_iters = 1
         self.mcts_sims = 25
         self.opp_nnet = KalahNetTrain(game, BATCH_SIZE, DEVICE, EPOCHS, LR, DROPOUT)
-        self.threshold = 0.55
+        self.threshold = 0.6
 
     
     def policyIter(self):
@@ -58,22 +59,22 @@ class Trainer():
             self.net.train(self.memory)
             curr_mcts = MCTS(self.game, self.net)
 
-            arena = Arena(lambda x: np.argmax(opp_mcts.getActionProb(x, tau=0)),
-                          lambda x: np.argmax(curr_mcts.getActionProb(x, tau=0)), self.game)
+            arena = bitchcage.Arena(lambda x: np.argmax(curr_mcts.getProbs(tau=0)),
+                          lambda x: np.argmax(opp_mcts.getProbs(tau=0)), self.game, self.net)
 
             # ARENA PART
             n_win, n_draw, n_lose = arena.playGames(NUM_GAMES)
 
-            log.info(f"Wins: {n_win} Draws: {n_draw}, Losses: {n_lose}")
-            if float(n_win / (n_draw + n_lose)) < self.threshold:
-                log.info('Old model still better')
+            print(f"Wins: {n_win} Draws: {n_draw}, Losses: {n_lose}")
+            if float(n_win / (n_draw + n_lose + n_win)) >= self.threshold:
+                print('Old model still better')
                 self.net.load_model_checkpoint(temp_name)
             else:
-                log.info('New model is banging')
+                print('New model is banging')
                 self.net.save_model_checkpoint(nnet_name)
                 self.net.save_model_checkpoint("checkpoints/thedestroyerofworlds.pth")
 
-        return net
+        return self.net
     
 
     def executeEpisode(self):
@@ -81,24 +82,36 @@ class Trainer():
         examples = []
         mcts = MCTS(self.game, self.net)
         state = self.game.board.board
+        # print("Execute Episode Part 1")
+        state_np = self.net.board_view_player()      
 
         while True:
-            pi = mcts.getProbs(self.game)
-            examples.append([state, pi, self.game.turn])
+            pi = mcts.getProbs() # start from the board at the bieginn ofthe game
+            pi_torch = torch.from_numpy(pi.astype(np.float64))
+            # print(f'probs: {pi}')
+            examples.append([state_np, pi_torch, self.game.turn])
             action = np.random.choice(range(len(pi)), p=pi)
             if action == 0:
                 action = -1
-            state, _, _ = self.game.makeMove(action)
+            # print(f'action: {action}')
+            state, _, _ = self.game.makeMove(action) # you made one move
+            state_np = self.net.board_view_player()
+
+            # print("Execute Episode Part 2")
             current_turn = self.game.turn
 
             reward = self.game.getGameOver(self.game.turn)
+            # print(f'reward: {reward}')
+            
 
             if reward != 0:
                 for ex in examples:
                     if (current_turn == ex[2]):
-                        self.memory.push(ex[0], ex[1], reward)
+                        reward_torch = torch.tensor([[float(reward)]])
+                        self.memory.push(ex[0], ex[1], reward_torch)
                     else:
-                        self.memory.push(ex[0], ex[1], -reward)
+                        reward_torch = torch.tensor([[float(-reward)]])
+                        self.memory.push(ex[0], ex[1], reward_torch)
                 print("TIME TAKEN EPSIODE: {:.3f}".format(time.time()-start))
                 return
        

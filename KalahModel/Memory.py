@@ -13,12 +13,11 @@ class Memory(object):
             self.memory.append(None)
         
         self.memory[self.position] = self.Transition(*args)
-        print(self.memory[self.position])
         self.position = (self.position + 1) % self.capacity
 
 
     def sample(self, batch_size):
-        print(len(self.memory))
+        # print(len(self.memory))
         assert batch_size <= len(self.memory)
 
         return random.sample(self.memory, batch_size)

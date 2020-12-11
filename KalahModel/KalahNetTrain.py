@@ -60,9 +60,14 @@ class KalahNetTrain(object):
                 transitions = memory.sample(self.batch_size)
                 batch = memory.Transition(*zip(*transitions))
                 #Sequence batch into states, pi, values
+ 
                 s = torch.cat(batch.state)
                 pi = torch.cat(batch.pi)
                 v = torch.cat(batch.v)
+
+                s = torch.reshape(s, (self.batch_size, 16))
+                pi = torch.reshape(pi, (self.batch_size, 8))
+
 
                 if self.is_cuda:
                     s, pi, v = s.contiguous().cuda(), pi.contiguous().cuda(), v.contiguous().cuda()
@@ -102,8 +107,8 @@ class KalahNetTrain(object):
             :param board: Kalah board
             :return: returns Board facing correctly for the current player's turn
         """
-        s = self.env.board.board.copy() if board is not None else board.copy()
-        p = self.env.turn if turn is not None else turn
+        s = self.env.board.board.copy() if board is None else board.board
+        p = self.env.turn if turn is None else turn
 
         if p == Side.NORTH:
             s[[0,1]] = s[[1,0]]

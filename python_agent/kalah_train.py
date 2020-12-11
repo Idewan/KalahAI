@@ -42,10 +42,10 @@ class Kalah(object):
     def getLegalActionState(self):
         legal_moves_in_board = []
         for i in range(1,8):
-            if self.board.getSeeds(self.player2, i) != 0:
+            if self.board.getSeeds(self.turn, i) != 0:
                 legal_moves_in_board.append(i)
 
-        if self.turn == 2:
+        if self.no_turns == 2:
             legal_moves_in_board.append(-1)
         
         return legal_moves_in_board
@@ -85,11 +85,11 @@ class Kalah(object):
 
         # if illegal move, then lose
         if not self.isLegalMove(move):
+            print("ILLEGAL MOVE")
             if self.turn == self.player1:
                 self.reward = -1
             else:
                 self.reward = 1
-
             return None, self.reward, True
 
         # pick seeds
@@ -177,7 +177,7 @@ class Kalah(object):
             elif self.score_player1 < self.score_player2:
                 self.reward = -1
 
-            return None, self.reward, True
+            return self.board.board, self.reward, True
 
         # whose turn is it?
         if self.no_turns == 1:
