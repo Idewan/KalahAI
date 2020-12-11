@@ -11,7 +11,7 @@ class Arena():
         self.net = net
 
     
-    def playGame(self, curr_player1):
+    def playGame(self, player):
         """
             Let's explain what is going on. Player1 and Player2 are functions which take
             the max action from a MCTS run. 
@@ -25,25 +25,26 @@ class Arena():
                 curPlayer = 0
             else:
                 curPlayer = 1
+            print(self.game.board.toString())
+            print(self.game.turn)
 
-            # print(self.game.board.toString())
-            # print(self.game.turn)
-            # print(self.game.player1)
-            # print(curPlayer)
-
-            action = players[curPlayer](self.game)
+            action = players[curPlayer](1)
 
             valids = self.game.getLegalMoves()
-            # print(valids)
-            # print(self.game.turn)
 
             if valids[action] == 0:
                 print(f'Action {action} is not valid!')
                 print(f'valids = {valids}')
                 assert valids[action] > 0
+            print(action)
             next_state, _, _ = self.game.makeMove(action)
-       
-        return self.game.getGameOver(curr_player1)
+
+        if "p1" == player:
+            result = self.game.getGameOver(self.game.player1)
+        else:
+            result = self.game.getGameOver(self.game.player2)
+
+        return result
 
     def playGames(self, num):
 
@@ -53,7 +54,7 @@ class Arena():
         draws = 0
 
         for _ in range(num):
-            gameResult = self.playGame(self.game.player1)
+            gameResult = self.playGame("p1")
             if gameResult == 1:
                 oneWon += 1
             elif gameResult == -1:
@@ -65,7 +66,7 @@ class Arena():
         print(f"PLAYER 1 WIN: {oneWon} DRAWS: {draws} LOSSES: {twoWon}")
 
         for _ in range(num):
-            gameResult = self.playGame(self.game.player2)
+            gameResult = self.playGame("p2")
             if gameResult == 1:
                 oneWon += 1
             elif gameResult == -1:

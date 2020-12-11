@@ -27,6 +27,8 @@ class Kalah(object):
         self.score_player2 = 0
         self.no_turns = 0
 
+        self.swap_occured =  False
+
 
     def getLegalMoves(self):
         legal_moves = self.getLegalActionState()
@@ -232,8 +234,7 @@ class Kalah(object):
         s = self.player1
         self.player1 = self.player2
         self.player2 = s
-        # self.turn = self.player2
-        #BUG NEED TO CHANGE TURN
+        self.swap_occured = True
 
 
     def get_score(self, side):
