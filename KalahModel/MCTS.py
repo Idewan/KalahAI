@@ -80,7 +80,7 @@ class MCTS():
             self.end_states[state_string] = game.getGameOver(game.prev_player)
         # if the game has ended (i.e. value associated with the state is non-zero) return the reward, we cannot expand any more
         if self.end_states[state_string] != 0:
-            return self.end_states[state_string]
+            return self.end_states[state_string] 
 
         # the state is a leaf node (or has not been expanded yet)
         #Here if we haven't visited the state in the view of a specific player we should also consider that we need 
