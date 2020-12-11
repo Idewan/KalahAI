@@ -86,11 +86,12 @@ class MCTS():
         #Here if we haven't visited the state in the view of a specific player we should also consider that we need 
         # to visit it. I.e. that this has not been visited yet.
         if (state_string, game.turn) not in self.P:
-            # print('HERE AGAIN')
+
             state_np = self.net.board_view_player(state, player)
-            # print(f'Board in right orientation {state_np}')
+
             self.P[(state_string, game.turn)], value = self.net.predict(state_np)  # this gives the policy vector and the value for the current player
             legal_actions = game.getLegalMoves()
+            
             # masking out invalid actions
             self.P[(state_string, game.turn)] = self.P[(state_string, game.turn)] * legal_actions
 
@@ -108,18 +109,10 @@ class MCTS():
 
         # legal_actions is a list of 0's if illegal and 1's if legal
         legal_actions = self.legal_actions[(state_string, game.turn)]
-        # print(f'turn {game.turn}')
-        # print(f'state {state_string}')
-        # print(f'Legal {legal_actions}')
-        # print(game.board.board[0][:])
-        # print(game.board.board[1][:])
         current_best = -float('inf')
-        #BUG - Illegal move when you swap. 
-        # cannot use -1 because that is a possible action
         best_action = -5
 
         for action in range(game.actionspace_size):
-            # print(f'Legal Action {legal_actions[action]}')
             if legal_actions[action]:
                 if (state_string, action) in self.Q:
                     u = self.Q[(state_string, action)] + self.cpuct * self.P[(state_string, game.turn)][action] * math.sqrt(self.N[state_string]) / (1 + self.N_sa[(state_string, action)])
@@ -138,18 +131,13 @@ class MCTS():
         if action == -1:
             self.legal_actions[(state_string, game.turn)][0] = 0 
         
-        # print(action)
-        # print(game.no_turns)
         # making move on the copy so that the original game does not change
         next_state, _, _ = game.makeMove(action)
         next_player = game.turn
         prev_p = game.prev_player
         game.prev_player = player
 
-        # print("HERE")
         value = self.search(game, self.net)
-
-        # print(state_string, action)
         
         if (state_string, action) in self.Q:
             self.Q[(state_string, action)] = (self.N_sa[(state_string, action)] * self.Q[(state_string, action)] + value) / (self.N_sa[(state_string, action)] + 1)
