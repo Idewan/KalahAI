@@ -69,6 +69,7 @@ class MCTS():
         player = game.turn
         state = game.board
         state_string = state.toString()
+        gt = game.no_turns
 
         if state_string not in self.end_states:
             self.end_states[state_string] = game.getGameOver(game.prev_player)
@@ -110,7 +111,7 @@ class MCTS():
             print(f'PREV: {game.prev_player}')
             print(f'VALUE: {value}\n')  # this is the value i get by playing the action
 
-            if game.no_turns == 2 and game.swap_occured:
+            if gt == 2 and game.swap_occured:
                 return -value
             else:
                 # was return value if game.prev_player == game.player1 else -value
@@ -154,8 +155,8 @@ class MCTS():
         print(f'VALUE: {value}\n')  # this is the value i get by playing the action
 
         # this is to test the swap values
-        if action == -1:
-            print('SWAPPED')
+        # if action == -1:
+        #     exit()
         
         if (state_string, action) in self.Q:
             self.Q[(state_string, action)] = (self.N_sa[(state_string, action)] * self.Q[(state_string, action)] + value) / (self.N_sa[(state_string, action)] + 1)
@@ -166,7 +167,7 @@ class MCTS():
         
         self.N[state_string] += 1
 
-        if game.no_turns == 2 and game.swap_occured:
+        if gt == 2 and game.swap_occured:
             return -value
         else:
             return value if player == prev_p else -value
