@@ -1,4 +1,4 @@
-from . import side as s
+import side as s
 import numpy as np
 
 class Board(object):

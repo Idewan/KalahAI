@@ -27,7 +27,7 @@ class Arena():
                 curPlayer = 1
             print(f"Game turn {self.game.turn}")
             print(f"Game board {self.game.board.toString()}")
-            action = players[curPlayer](1)
+            action = players[curPlayer](0)
             print(f"Game action {action}")
 
             valids = self.game.getLegalMoves()

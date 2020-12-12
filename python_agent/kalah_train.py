@@ -1,6 +1,6 @@
-from . import board as b
-from . import side as s
-from . import move as m
+import board as b
+import side as s
+import move as m
 
 class Kalah(object):
 
