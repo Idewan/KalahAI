@@ -34,12 +34,12 @@ class Board(object):
     def clone(self, original):
 
         holes = original.holes
-        
-        clone = np.zeros((2, holes+1))
+
+        clone = Board(holes, 1)
 
         for i in range(holes+1):
-            clone[self.NORTH_ROW][i] = original.board[self.NORTH_ROW][i]
-            clone[self.SOUTH_ROW][i] = original.board[self.SOUTH_ROW][i]
+            clone.board[self.NORTH_ROW][i] = original.board[self.NORTH_ROW][i]
+            clone.board[self.SOUTH_ROW][i] = original.board[self.SOUTH_ROW][i]
 
         return clone
 
