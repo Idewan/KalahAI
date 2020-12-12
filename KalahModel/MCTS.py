@@ -40,7 +40,7 @@ class MCTS():
         state = self.game.board
 
         for i in range(self.no_mcts):
-            print(f'MCTS NUMBER {i}')
+            # print(f'MCTS NUMBER {i}')
             game_copy = copy.deepcopy(self.game)
             self.search(game_copy, self.net)
 
@@ -75,10 +75,10 @@ class MCTS():
             self.end_states[state_string] = game.getGameOver(game.prev_player)
         # if the game has ended (i.e. value associated with the state is non-zero) return the reward, we cannot expand any more
         if self.end_states[state_string] != 0:
-            print('END STATES')
-            print(f'TURN: {game.turn}')
-            print(f'PREV: {game.prev_player}')
-            print(f'VALUE: {self.end_states[state_string]}\n')  # this is the value i get by playing the action
+            # print('END STATES')
+            # print(f'TURN: {game.turn}')
+            # print(f'PREV: {game.prev_player}')
+            # print(f'VALUE: {self.end_states[state_string]}\n')  # this is the value i get by playing the action
             return self.end_states[state_string] 
 
         # the state is a leaf node
@@ -106,10 +106,10 @@ class MCTS():
             self.legal_actions[(state_string, game.turn)] = legal_actions
             self.N[state_string] = 0
 
-            print('EXPAND')
-            print(f'TURN: {game.turn}')
-            print(f'PREV: {game.prev_player}')
-            print(f'VALUE: {value}\n')  # this is the value i get by playing the action
+            # print('EXPAND')
+            # print(f'TURN: {game.turn}')
+            # print(f'PREV: {game.prev_player}')
+            # print(f'VALUE: {value}\n')  # this is the value i get by playing the action
 
             if gt == 2 and game.swap_occured:
                 return -value
@@ -149,10 +149,10 @@ class MCTS():
 
         value = self.search(game, self.net)
 
-        print('OUT')
-        print(f'TURN: {player}')
-        print(f'PREV: {prev_p}')
-        print(f'VALUE: {value}\n')  # this is the value i get by playing the action
+        # print('OUT')
+        # print(f'TURN: {player}')
+        # print(f'PREV: {prev_p}')
+        # print(f'VALUE: {value}\n')  # this is the value i get by playing the action
 
         # this is to test the swap values
         # if action == -1:

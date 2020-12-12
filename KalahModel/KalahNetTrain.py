@@ -76,7 +76,7 @@ class KalahNetTrain(object):
                 output_pi, output_v = self.nnet(s)
                 l_pi = self.loss_pi(pi, output_pi)
                 l_v = self.loss_v(v, output_v)
-                loss = l_v + l_pi
+                loss =  l_pi + l_v
 
                 #Compute gradient and perform single step
                 optimizer.zero_grad()

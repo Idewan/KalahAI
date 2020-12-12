@@ -27,11 +27,11 @@ class Trainer():
         self.game = game
         self.net = net
         self.memory = Memory(200000)
-        self.num_eps = 10
-        self.num_iters = 10
-        self.mcts_sims = 25
+        self.num_eps = 100
+        self.num_iters = 80
+        self.mcts_sims = 50
         self.opp_nnet = KalahNetTrain(game, BATCH_SIZE, DEVICE, EPOCHS, LR, DROPOUT)
-        self.threshold = 0.6
+        self.threshold = 0.55
 
     
     def policyIter(self):
@@ -43,6 +43,7 @@ class Trainer():
                 self.game.reset()
                 print(f"Executing episode {e}")
                 self.executeEpisode()
+                exit()
             
             # back up of the memory
             # log.info("Saving back-up of the memory")
@@ -84,42 +85,44 @@ class Trainer():
         examples = []
         mcts = MCTS(self.game, self.net)
         state = self.game.board.board
-        # print("Execute Episode Part 1")
-        state_np = self.net.board_view_player()      
+        state_np = self.net.board_view_player()
+
+        print(f'State from view of player: {state_np}')  
 
         while True:
             pi = mcts.getProbs() # start from the board at the bieginn ofthe game
             pi_torch = torch.from_numpy(pi.astype(np.float64))
-            # print(f'probs: {pi}')
+            print(f'Probabilities: {pi}')
             examples.append([state_np, pi_torch, self.game.turn])
             action = np.random.choice(range(len(pi)), p=pi)
             if action == 0:
                 action = -1
-            # print(f'action: {action}')
+            print(f'Action: {action}')
             state, _, _ = self.game.makeMove(action) # you made one move
             state_np = self.net.board_view_player()
+            print(f'State from view of player: {state_np}') 
 
-            # print("Execute Episode Part 2")
             current_turn = self.game.turn
+            print(f'Current turn: {current_turn')
 
             reward = self.game.getGameOver(current_turn)
+            print(f'Reward: {reward}')
             
-            #ACCOUNT FOR SwAPS
+            # ACCOUNT FOR SwAPS
             if reward != 0:
                 for i in range(len(examples)):
-                    # TODO ?BUG?
                     if (i == 0 or i == 1) and self.game.swap_occured:
                         # For the first two turns it changes where 
                         if current_turn == examples[i][2]: 
                           reward_torch = torch.tensor([[float(-reward)]])     
                         else:
                             reward_torch = torch.tensor([float(reward)])
-                    # ?BUG? TODO 
                     elif (current_turn == examples[i][2]):
                         reward_torch = torch.tensor([[float(reward)]])
                     else:
                         reward_torch = torch.tensor([[float(-reward)]])
 
+                    print(f'Reard torch: {reward_torch}')
                     self.memory.push(examples[i][0], examples[i][1], reward_torch)
                 print("TIME TAKEN EPSIODE: {:.3f}".format(time.time()-start))
                 return
