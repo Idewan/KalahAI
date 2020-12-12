@@ -78,7 +78,7 @@ class Trainer():
 
         return self.net
     
-#Has to be edited once the MCTS changes
+    # Has to be edited once the MCTS changes
     def executeEpisode(self):
         start = time.time()
         examples = []

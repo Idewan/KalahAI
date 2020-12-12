@@ -22,28 +22,28 @@ class MCTS():
 
         # the Q-values for (steate, action)
         self.Q = {}
-        # # the number of times the edge (state, action) was visited
+        # the number of times the edge (state, action) was visited
         self.N_sa = {}
         # the number of times the state has been visited
         self.N = {}
         # initial policy returned by the net
         self.P = {}
 
-        # # stores the score for the end games
+        # stores the score for the end games
         self.end_states = {}
-        # # stores the valid moves
+        # stores the valid moves
         self.legal_actions = {}
 
 
     def getProbs(self, tau=1):
+        
         state = self.game.board
 
-        # print(f'START GET PROBS')
-
         for i in range(self.no_mcts):
+            print(f'MCTS NUMBER {i}')
             game_copy = copy.deepcopy(self.game)
-            # print(f'RUN NUMBER {i}')
             self.search(game_copy, self.net)
+
         state_string_p = state.toString()
         counts = [self.N_sa[(state_string_p, action)] if (state_string_p, action) in self.N_sa else 0 for action in range(self.game.actionspace_size)]
   
@@ -57,7 +57,6 @@ class MCTS():
         counts = [x ** (1. / tau) for x in counts]
         counts_sum = float(sum(counts))
         legal_actions = np.array(self.game.getLegalMoves())
-        # print(f'legal {legal_actions}')
         probs = [x / counts_sum for x in counts] * legal_actions
         probs /= np.sum(probs)
 
@@ -65,33 +64,32 @@ class MCTS():
 
 
     def search(self, game, net):
-
-        # print("***** Start MCTS *****")
         
         # player and board at the root of the tree
         player = game.turn
         state = game.board
         state_string = state.toString()
 
-        # print(f'Player {player}')
-        # print(f'State {state}')
-
         if state_string not in self.end_states:
             self.end_states[state_string] = game.getGameOver(game.prev_player)
         # if the game has ended (i.e. value associated with the state is non-zero) return the reward, we cannot expand any more
         if self.end_states[state_string] != 0:
+            print('END STATES')
+            print(f'TURN: {game.turn}')
+            print(f'PREV: {game.prev_player}')
+            print(f'VALUE: {self.end_states[state_string]}\n')  # this is the value i get by playing the action
             return self.end_states[state_string] 
 
-        # the state is a leaf node (or has not been expanded yet)
-        #Here if we haven't visited the state in the view of a specific player we should also consider that we need 
-        # to visit it. I.e. that this has not been visited yet.
+        # the state is a leaf node
+        # here if we haven't visited the state in the view of a specific player we should also consider that we need 
+        # to visit it. i.e. this has not been visited yet.
         if (state_string, game.turn) not in self.P:
 
             state_np = self.net.board_view_player(state, player)
 
-            self.P[(state_string, game.turn)], value = self.net.predict(state_np)  # this gives the policy vector and the value for the current player
+            # this gives the policy vector and the value for the current player
+            self.P[(state_string, game.turn)], value = self.net.predict(state_np)
             legal_actions = game.getLegalMoves()
-            
             # masking out invalid actions
             self.P[(state_string, game.turn)] = self.P[(state_string, game.turn)] * legal_actions
 
@@ -103,15 +101,27 @@ class MCTS():
                 print("All valid moves were masked, doing a workaround.")
                 self.P[(state_string, game.turn)] = self.P[(state_string, game.turn)] + legal_actions
                 self.P[(state_string, game.turn)] /= np.sum(self.P[(state_string, game.turn)])
+
             self.legal_actions[(state_string, game.turn)] = legal_actions
             self.N[state_string] = 0
-            return value if game.prev_player == game.player1 else -value
+
+            print('EXPAND')
+            print(f'TURN: {game.turn}')
+            print(f'PREV: {game.prev_player}')
+            print(f'VALUE: {value}\n')  # this is the value i get by playing the action
+
+            if (game.no_turns == 2 or game.no_turns == 1) and game.swap_occured:
+                return -value
+            else:
+                # was return value if game.prev_player == game.player1 else -value
+                return value if game.prev_player == game.turn else -value
 
         # legal_actions is a list of 0's if illegal and 1's if legal
         legal_actions = self.legal_actions[(state_string, game.turn)]
         current_best = -float('inf')
         best_action = -5
 
+        # UCB
         for action in range(game.actionspace_size):
             if legal_actions[action]:
                 if (state_string, action) in self.Q:
@@ -131,13 +141,21 @@ class MCTS():
         if action == -1:
             self.legal_actions[(state_string, game.turn)][0] = 0 
         
-        # making move on the copy so that the original game does not change
         next_state, _, _ = game.makeMove(action)
         next_player = game.turn
         prev_p = game.prev_player
         game.prev_player = player
 
         value = self.search(game, self.net)
+
+        print('OUT')
+        print(f'TURN: {player}')
+        print(f'PREV: {prev_p}')
+        print(f'VALUE: {value}\n')  # this is the value i get by playing the action
+
+        # this is to test the swap values
+        # if action == -1:
+        #     exit()
         
         if (state_string, action) in self.Q:
             self.Q[(state_string, action)] = (self.N_sa[(state_string, action)] * self.Q[(state_string, action)] + value) / (self.N_sa[(state_string, action)] + 1)
@@ -147,5 +165,8 @@ class MCTS():
             self.N_sa[(state_string, action)] = 1
         
         self.N[state_string] += 1
-        #SPECIAL CASE SWAP
-        return value if player == prev_p else -value
+
+        if (game.no_turns == 2 or game.no_turns == 1) and game.swap_occured:
+            return -value
+        else:
+            return value if player == prev_p else -value
