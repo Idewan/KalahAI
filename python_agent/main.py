@@ -11,7 +11,7 @@ import torch
 import logging
 
 logging.basicConfig(level=logging.DEBUG, filename='debug.log')
-logging.debug('NEW GAME')
+logging.debug('******** NEW GAME ********')
 
 sys.path.append('../')
 from KalahModel.KalahNetTrain import KalahNetTrain
@@ -25,7 +25,8 @@ DROPOUT = 0.5
 NUM_GAMES = 40
 
 def sendMsg(msg):
-    print(msg, flush=True)
+    print(msg)
+    sys.stdout.flush()
 
 
 def recvMsg():
@@ -57,68 +58,70 @@ def main():
         
         # read message
         message = recvMsg()
-        logging.debug(f'Message: {message}')
+        logging.debug(f'MSG: {message}')
 
         # interprest message with protocol
         message_type = p.getMessageType(message)
-        logging.debug(f'Message type: {message_type}')
+        logging.debug(f'MSG TYPE: {message_type}')
 
         # START
         if message_type == MsgType.START:
-
-            logging.debug(f'START')
             
             turn = p.interpretStartMsg(message)
 
-            logging.debug(f'{turn}')
-
             if turn:
-                logging.debug(f'Play turn on start')
+                logging.debug(f'I AM PLAYING ON START :)')
+
                 action = np.argmax(mcts.getProbs(tau=0))
-                logging.debug(f'Action: {action}')
                 msg = p.createMoveMsg(action)
-                logging.debug(f'I am sending this message {msg}')
                 sendMsg(msg)
                 game.makeMove(action)
-                logging.debug(f'board after i played my starting move:\n {game.board.toString()}')
+                just_moved = True
+
+                logging.debug(f'ACTION: {action}')
+                logging.debug(f'I am sending this message: {msg}')
+                logging.debug(f'Board after I moved: \n {game.board.toString()} \n')
             else:
+                logging.debug(f'I AM NOT PLAYING ON START :(\n')
                 continue
 
         # CHANGE
         elif message_type == MsgType.STATE:
 
-            # this is the update when opponent moves
+            # update board when I do not move
             if not just_moved:
-                logging.debug(f'Not my turn')
                 action = p.get_action(message)
-                logging.debug(f'other player takes action {action}')
                 game.makeMove(action)
                 just_moved = False
-                logging.debug(f'game board after other player moved: \n {game.board.toString()}')
+
+                logging.debug(f'I HAVE NOT JUST MOVED, SO I NEED TO UPDATE THE BOARD WITH THE OPPONENT\'S MOVE')
+                logging.debug(f'ACTION: {action}')
+                logging.debug(f'Board after other player moved: \n {game.board.toString()} \n')
 
             if p.get_again(message):            
-                logging.debug(f'now I make a move')
                 action = np.argmax(mcts.getProbs(tau=0))
                 if action == 0:
                     action = -1
-                logging.debug(f'my action is {action}')
-                        
-                if action == -1:
-                    msg = p.createSwapMsg()
+                    msg = p.createSwapMsg()                   
                 else:
                     msg = p.createMoveMsg(action)
-                logging.debug(f'I am sending this message {msg}')
+
                 sendMsg(msg)
                 game.makeMove(action)
                 just_moved = True
-                logging.debug(f'game board after I moved: \n {game.board.toString()}')
+
+                logging.debug(f'MY TURN TO MOVE')
+                logging.debug(f'ACTION: {action}')
+                logging.debug(f'I am sending this message: {msg}')
+                logging.debug(f'Board after I moved: \n {game.board.toString()}')
             
             if not p.get_again(message):
                 just_moved = False
+                logging.debug(f'Setting just_moved to FALSE')
 
         # END
         elif message_type == MsgType.END:
-            logging.debug(f'END')
+            logging.debug(f'THIS IS THE END :(')
             break
 
 
