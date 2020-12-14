@@ -10,7 +10,21 @@ from python_agent.side import Side
 
 import torch
 import torch.optim as optim
-
+class AverageMeter(object):
+    def __init__(self):
+        self.val = 0
+        self.avg = 0
+        self.sum = 0
+        self.count = 0
+    
+    def __repr__(self):
+        return f'{self.avg:.2e}'
+    
+    def update(self, val, n=1):
+        self.val = val
+        self.sum += val * n 
+        self.count += n
+        self.avg = self.sum / self.count
 
 class KalahNetTrain(object):
 
@@ -51,6 +65,9 @@ class KalahNetTrain(object):
 
         for epoch in range(self.epochs):
             print(f'EPOCH: {epoch +1}')
+            self.nnet.train()
+            pi_losses = AverageMeter()
+            v_losses = AverageMeter()
 
             batch_count = int(len(memory) / self.batch_size)
 
@@ -67,6 +84,7 @@ class KalahNetTrain(object):
 
                 s = torch.reshape(s, (self.batch_size, 16))
                 pi = torch.reshape(pi, (self.batch_size, 8))
+                v = torch.reshape(v, (self.batch_size, 1))
 
 
                 if self.is_cuda:
@@ -76,7 +94,12 @@ class KalahNetTrain(object):
                 output_pi, output_v = self.nnet(s)
                 l_pi = self.loss_pi(pi, output_pi)
                 l_v = self.loss_v(v, output_v)
-                loss = l_v + l_pi
+                loss =  l_pi + l_v
+
+                #Record loss
+                pi_losses.update(l_pi.item(), self.batch_size)
+                v_losses.update(l_v.item(), self.batch_size)
+                t.set_postfix(Loss_pi=pi_losses, Loss_v=v_losses)
 
                 #Compute gradient and perform single step
                 optimizer.zero_grad()
@@ -90,8 +113,8 @@ class KalahNetTrain(object):
             :param s: current state (kalah board) - view corrected
         """
         #Preparing input
-        self.nnet.eval()
         s = s.contiguous().cuda() if self.is_cuda else s
+        self.nnet.eval()
         with torch.no_grad():
             pi, v = self.nnet(s.double().unsqueeze(0))
         
@@ -130,6 +153,8 @@ class KalahNetTrain(object):
             :param targets: Target values
             :param outputs: Output values
         """
+        # print(targets.shape)
+        # print(outputs.s)
         return torch.sum((targets - outputs.view(-1)) ** 2) / targets.size()[0]
 
     def save_model_checkpoint(self, path):

@@ -25,10 +25,10 @@ class Arena():
                 curPlayer = 0
             else:
                 curPlayer = 1
-            print(self.game.board.toString())
-            print(self.game.turn)
-
-            action = players[curPlayer](1)
+            # print(f"Game turn {self.game.turn}")
+            # print(f"Game board {self.game.board.toString()}")
+            action = players[curPlayer](0)
+            # print(f"Game action {action}")
 
             valids = self.game.getLegalMoves()
 
@@ -36,7 +36,6 @@ class Arena():
                 print(f'Action {action} is not valid!')
                 print(f'valids = {valids}')
                 assert valids[action] > 0
-            print(action)
             next_state, _, _ = self.game.makeMove(action)
 
         if "p1" == player:
@@ -55,6 +54,7 @@ class Arena():
 
         for _ in range(num):
             gameResult = self.playGame("p1")
+            # print(f'Playing as player 1 {gameResult}')
             if gameResult == 1:
                 oneWon += 1
             elif gameResult == -1:
@@ -67,6 +67,7 @@ class Arena():
 
         for _ in range(num):
             gameResult = self.playGame("p2")
+            # print(f'Playing as player 2 {gameResult}')
             if gameResult == 1:
                 oneWon += 1
             elif gameResult == -1:
@@ -74,4 +75,5 @@ class Arena():
             else:
                 draws += 1
 
+        print(f"WIN: {oneWon} DRAWS: {draws} LOSSES: {twoWon}")
         return oneWon, draws, twoWon

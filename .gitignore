@@ -131,3 +131,8 @@ dmypy.json
 
 # models
 *pth
+
+#MISC
+.vscode/
+environment/.DS_Store
+.DS_Store/

@@ -11,27 +11,27 @@ class KalahNet(nn.Module):
         holes_n = (holes + 1) * 2
 
         #Layers - fully connected layers
-        self.fc1 = nn.Linear(holes_n, 512)
-        self.fc2 = nn.Linear(512, 512)
-        self.fc3 = nn.Linear(512, 512)
-        self.fc4 = nn.Linear(512, 512)
+        self.fc1 = nn.Linear(holes_n, 16)
+        self.fc2 = nn.Linear(16, 16)
+        self.fc3 = nn.Linear(16, 16)
+        self.fc4 = nn.Linear(16, 16)
 
         #Probability Distribution
-        self.fc5 = nn.Linear(512, action_n)
+        self.fc5 = nn.Linear(16, action_n)
 
         #Value
-        self.fc6 = nn.Linear(512, 1)
+        self.fc6 = nn.Linear(16, 1)
 
-        self.fc_bn_1 = nn.BatchNorm1d(512)
-        self.fc_bn_2 = nn.BatchNorm1d(512)
-        self.fc_bn_3 = nn.BatchNorm1d(512)
-        self.fc_bn_4 = nn.BatchNorm1d(512)
+        self.fc_bn_1 = nn.BatchNorm1d(16)
+        self.fc_bn_2 = nn.BatchNorm1d(16)
+        self.fc_bn_3 = nn.BatchNorm1d(16)
+        self.fc_bn_4 = nn.BatchNorm1d(16)
 
     def forward(self, s):
-        s = F.dropout(F.relu(self.fc_bn_1(self.fc1(s))), p=self.dropout, training=True)
-        s = F.dropout(F.relu(self.fc_bn_2(self.fc2(s))), p=self.dropout, training=True)
-        s = F.dropout(F.relu(self.fc_bn_3(self.fc3(s))), p=self.dropout, training=True)
-        s = F.dropout(F.relu(self.fc_bn_4(self.fc4(s))), p=self.dropout, training=True)
+        s = F.dropout(F.relu(self.fc_bn_1(self.fc1(s))), p=self.dropout, training=self.training)
+        s = F.dropout(F.relu(self.fc_bn_2(self.fc2(s))), p=self.dropout, training=self.training)
+        s = F.dropout(F.relu(self.fc_bn_3(self.fc3(s))), p=self.dropout, training=self.training)
+        s = F.dropout(F.relu(self.fc_bn_4(self.fc4(s))), p=self.dropout, training=self.training)
 
         pi = self.fc5(s)
         v = self.fc6(s)

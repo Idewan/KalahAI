@@ -18,7 +18,7 @@ class MCTS():
         self.game = game
         self.net = net
         self.cpuct = 1
-        self.no_mcts = 25
+        self.no_mcts = 50
 
         # the Q-values for (steate, action)
         self.Q = {}
@@ -40,20 +40,21 @@ class MCTS():
         state = self.game.board
 
         for i in range(self.no_mcts):
-            print(f'MCTS NUMBER {i}')
+            # print(f'MCTS NUMBER {i}')
             game_copy = copy.deepcopy(self.game)
             self.search(game_copy, self.net)
 
         state_string_p = state.toString()
         counts = [self.N_sa[(state_string_p, action)] if (state_string_p, action) in self.N_sa else 0 for action in range(self.game.actionspace_size)]
-  
+        # print(tau)
+        
         if tau == 0:
             best_actions = np.array(np.argwhere(counts == np.max(counts))).flatten()
             best_action = np.random.choice(best_actions)
             probs = [0] * len(counts)
             probs[best_action] = 1
             return probs
-
+        
         counts = [x ** (1. / tau) for x in counts]
         counts_sum = float(sum(counts))
         legal_actions = np.array(self.game.getLegalMoves())
@@ -75,10 +76,10 @@ class MCTS():
             self.end_states[state_string] = game.getGameOver(game.prev_player)
         # if the game has ended (i.e. value associated with the state is non-zero) return the reward, we cannot expand any more
         if self.end_states[state_string] != 0:
-            print('END STATES')
-            print(f'TURN: {game.turn}')
-            print(f'PREV: {game.prev_player}')
-            print(f'VALUE: {self.end_states[state_string]}\n')  # this is the value i get by playing the action
+            # print('END STATES')
+            # print(f'TURN: {game.turn}')
+            # print(f'PREV: {game.prev_player}')
+            # print(f'VALUE: {self.end_states[state_string]}\n')  # this is the value i get by playing the action
             return self.end_states[state_string] 
 
         # the state is a leaf node
@@ -106,10 +107,10 @@ class MCTS():
             self.legal_actions[(state_string, game.turn)] = legal_actions
             self.N[state_string] = 0
 
-            print('EXPAND')
-            print(f'TURN: {game.turn}')
-            print(f'PREV: {game.prev_player}')
-            print(f'VALUE: {value}\n')  # this is the value i get by playing the action
+            # print('EXPAND')
+            # print(f'TURN: {game.turn}')
+            # print(f'PREV: {game.prev_player}')
+            # print(f'VALUE: {value}\n')  # this is the value i get by playing the action
 
             if gt == 2 and game.swap_occured:
                 return -value
@@ -149,10 +150,10 @@ class MCTS():
 
         value = self.search(game, self.net)
 
-        print('OUT')
-        print(f'TURN: {player}')
-        print(f'PREV: {prev_p}')
-        print(f'VALUE: {value}\n')  # this is the value i get by playing the action
+        # print('OUT')
+        # print(f'TURN: {player}')
+        # print(f'PREV: {prev_p}')
+        # print(f'VALUE: {value}\n')  # this is the value i get by playing the action
 
         # this is to test the swap values
         # if action == -1:
