@@ -14,10 +14,10 @@ import Arena as bitchcage
 
 from pickle import Pickler, Unpickler
 
-BATCH_SIZE = 32
+BATCH_SIZE = 64
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-EPOCHS = 30 
-LR = 0.2
+EPOCHS = 10 
+LR = 0.002
 DROPOUT = 0.3
 NUM_GAMES = 40
 
@@ -28,9 +28,9 @@ class Trainer():
         self.iter = 0
         self.net = KalahNetTrain(self.game, BATCH_SIZE, DEVICE, EPOCHS, LR, DROPOUT, self.iter)
         self.memory = Memory(200000)
-        self.num_eps = 100
-        self.num_iters = 80
-        self.mcts_sims = 50
+        self.num_eps = 150
+        self.num_iters = 100
+        self.mcts_sims = 200
         self.cpuct_t = 3
         self.cpuct_c = 1
         self.opp_nnet = KalahNetTrain(self.game, BATCH_SIZE, DEVICE, EPOCHS, LR, DROPOUT, self.iter)
