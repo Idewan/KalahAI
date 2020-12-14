@@ -36,7 +36,7 @@ class Kalah(object):
         for m in legal_moves:
             if m != -1:
                 legal_moves_bin[m] = 1
-            else:
+            elif m == 1:
                 legal_moves_bin[0] = 1
         return legal_moves_bin
 

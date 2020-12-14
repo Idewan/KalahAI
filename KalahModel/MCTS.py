@@ -8,6 +8,7 @@ from python_agent.kalah_train import Kalah
 from python_agent.board import Board
 from python_agent.side import Side
 
+log.basicConfig(level=log.DEBUG, filename='./logs/MCTS_debug.log', format='%(asctime)s %(message)s')
 # sys.setrecursionlimit(10000)
 
 EPSILON = 1e-8
@@ -17,10 +18,11 @@ class MCTS():
     def __init__(self, game, net):
         self.game = game
         self.net = net
-        self.cpuct = 1
+        # to tweak to get the best exploration-exploitation tradeoff
+        self.cpuct = 3
         self.no_mcts = 50
 
-        # the Q-values for (steate, action)
+        # the Q-values for (state, action)
         self.Q = {}
         # the number of times the edge (state, action) was visited
         self.N_sa = {}
@@ -46,18 +48,28 @@ class MCTS():
 
         state_string_p = state.toString()
         counts = [self.N_sa[(state_string_p, action)] if (state_string_p, action) in self.N_sa else 0 for action in range(self.game.actionspace_size)]
-        # print(tau)
+
+        legal_actions = np.array(self.game.getLegalMoves())
         
         if tau == 0:
             best_actions = np.array(np.argwhere(counts == np.max(counts))).flatten()
             best_action = np.random.choice(best_actions)
             probs = [0] * len(counts)
             probs[best_action] = 1
+
+            if legal_actions[best_action] == 0:
+                log.debug("ALERT ALERT ALERT")
+                log.debug(f'Best actions: {best_actions}')
+                log.debug(f'Best action: {best_action}')
+                log.debug(f'Probabilities: {probs}')
+                action = np.random.choice(game_copy.getLegalActionState())
+                probs = [0] * len(counts)
+                probs[action] = 1
+
             return probs
         
         counts = [x ** (1. / tau) for x in counts]
         counts_sum = float(sum(counts))
-        legal_actions = np.array(self.game.getLegalMoves())
         probs = [x / counts_sum for x in counts] * legal_actions
         probs /= np.sum(probs)
 
@@ -92,6 +104,7 @@ class MCTS():
             # this gives the policy vector and the value for the current player
             self.P[(state_string, game.turn)], value = self.net.predict(state_np)
             legal_actions = game.getLegalMoves()
+
             # masking out invalid actions
             self.P[(state_string, game.turn)] = self.P[(state_string, game.turn)] * legal_actions
 
@@ -154,10 +167,6 @@ class MCTS():
         # print(f'TURN: {player}')
         # print(f'PREV: {prev_p}')
         # print(f'VALUE: {value}\n')  # this is the value i get by playing the action
-
-        # this is to test the swap values
-        # if action == -1:
-        #     exit()
         
         if (state_string, action) in self.Q:
             self.Q[(state_string, action)] = (self.N_sa[(state_string, action)] * self.Q[(state_string, action)] + value) / (self.N_sa[(state_string, action)] + 1)
