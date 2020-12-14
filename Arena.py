@@ -1,4 +1,5 @@
 import logging as log
+import numpy as np
 
 from KalahModel import KalahNetTrain
 
@@ -30,12 +31,13 @@ class Arena():
             action = players[curPlayer](0)
             # print(f"Game action {action}")
 
-            valids = self.game.getLegalMoves()
+            valids = np.array(self.game.getLegalMoves())
 
             if valids[action] == 0:
-                print(f'Action {action} is not valid!')
-                print(f'valids = {valids}')
-                assert valids[action] > 0
+                # print(f'Action {action} is not valid!')
+                # print(f'valids = {valids}')
+                # assert valids[action] > 0
+                return -1
             next_state, _, _ = self.game.makeMove(action)
 
         if "p1" == player:

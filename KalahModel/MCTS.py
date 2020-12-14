@@ -38,7 +38,7 @@ class MCTS():
 
 
     def getProbs(self, tau=1):
-        
+
         state = self.game.board
 
         for i in range(self.no_mcts):
@@ -57,14 +57,15 @@ class MCTS():
             probs = [0] * len(counts)
             probs[best_action] = 1
 
-            if legal_actions[best_action] == 0:
-                log.debug("ALERT ALERT ALERT")
-                log.debug(f'Best actions: {best_actions}')
-                log.debug(f'Best action: {best_action}')
-                log.debug(f'Probabilities: {probs}')
-                action = np.random.choice(game_copy.getLegalActionState())
-                probs = [0] * len(counts)
-                probs[action] = 1
+            # if legal_actions[best_action] == 0:
+            #     log.debug("ALERT ALERT ALERT")
+            #     log.debug(f'Best actions: {best_actions}')
+            #     log.debug(f'Best action: {best_action}')
+            #     log.debug(f'Probabilities: {probs}')
+
+            #     action = np.random.choice(self.game.getLegalActionState())
+            #     probs = [0] * len(counts)
+            #     probs[action] = 1
 
             return probs
         
@@ -113,7 +114,7 @@ class MCTS():
             if sum_P_s > 0:
                 self.P[(state_string, game.turn)] /= sum_P_s  # re-normalize
             else:
-                print("All valid moves were masked, doing a workaround.")
+                log.debug("All valid moves were masked, doing a workaround.")
                 self.P[(state_string, game.turn)] = self.P[(state_string, game.turn)] + legal_actions
                 self.P[(state_string, game.turn)] /= np.sum(self.P[(state_string, game.turn)])
 
