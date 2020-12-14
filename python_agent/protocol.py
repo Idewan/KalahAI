@@ -8,11 +8,11 @@ import invalidMessageException as ime
 class Protocol(object):
 
     def createMoveMsg(self, hole):
-        return f'MOVE;{hole}\n'
+        return f'MOVE;{hole}'
 
 
     def createSwapMsg(self):
-        return f'SWAP\n'
+        return f'SWAP'
     
 
     def getMessageType(self, msg):

@@ -14,10 +14,10 @@ import Arena as bitchcage
 
 from pickle import Pickler, Unpickler
 
-BATCH_SIZE = 64
+BATCH_SIZE = 32
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-EPOCHS = 10 
-LR = 0.001
+EPOCHS = 30 
+LR = 0.2
 DROPOUT = 0.3
 NUM_GAMES = 40
 
@@ -25,13 +25,16 @@ class Trainer():
     
     def __init__(self, game):
         self.game = game
-        self.net = KalahNetTrain(self.game, BATCH_SIZE, DEVICE, EPOCHS, LR, DROPOUT)
-        self.memory = Memory(300000)
+        self.iter = 0
+        self.net = KalahNetTrain(self.game, BATCH_SIZE, DEVICE, EPOCHS, LR, DROPOUT, self.iter)
+        self.memory = Memory(200000)
         self.num_eps = 100
         self.num_iters = 80
         self.mcts_sims = 50
-        self.opp_nnet = KalahNetTrain(self.game, BATCH_SIZE, DEVICE, EPOCHS, LR, DROPOUT)
-        self.og_nnet = KalahNetTrain(self.game, BATCH_SIZE, DEVICE, EPOCHS, LR, DROPOUT)
+        self.cpuct_t = 3
+        self.cpuct_c = 1
+        self.opp_nnet = KalahNetTrain(self.game, BATCH_SIZE, DEVICE, EPOCHS, LR, DROPOUT, self.iter)
+        self.og_nnet = KalahNetTrain(self.game, BATCH_SIZE, DEVICE, EPOCHS, LR, DROPOUT, self.iter)
         self.threshold = 0.55
 
     
@@ -40,6 +43,7 @@ class Trainer():
 
         for i in range(self.num_iters):
             print(f"Executing iteration {i}")
+            self.iter+=1
             for e in range(self.num_eps):
                 # reset and execute episode, i.e. one game using MCTS
                 self.game.reset()
@@ -50,8 +54,8 @@ class Trainer():
             # log.info("Saving back-up of the memory")
             # self.save_training_memory(f"checkpoint_{i}")
             
-            nnet_name = "trial1_numbers/checkpoint_{}.pth".format(i)
-            temp_name = "trial1_numbers/temp.pth"
+            nnet_name = "trial3_cpuct/checkpoint_{}.pth".format(i)
+            temp_name = "trial3_cpuct/temp.pth"
             self.net.save_model_checkpoint(temp_name)
             self.opp_nnet.load_model_checkpoint(temp_name)
 
@@ -62,12 +66,12 @@ class Trainer():
             self.game.reset()   #Reset game
 
             # MCTS for the opponent
-            opp_mcts = MCTS(self.game, self.opp_nnet)
+            opp_mcts = MCTS(self.game, self.opp_nnet, self.cpuct_c, self.mcts_sims)
 
             log.info("Training ...")
             print("Training...")
             self.net.train(self.memory)
-            curr_mcts = MCTS(self.game, self.net)
+            curr_mcts = MCTS(self.game, self.net, self.cpuct_c, self.mcts_sims)
 
             arena = bitchcage.Arena(lambda x: np.argmax(curr_mcts.getProbs(tau=0)),
                         lambda x: np.argmax(opp_mcts.getProbs(tau=0)), self.game, self.net)
@@ -82,11 +86,11 @@ class Trainer():
             else:
                 print('New model is banging')
                 self.net.save_model_checkpoint(nnet_name)
-                self.net.save_model_checkpoint("trial1_numbers/thedestroyerofworlds.pth")
+                self.net.save_model_checkpoint("trial3_cpuct/thedestroyerofworlds.pth")
 
                 print("Pitting against the Original Network")
                 self.game.reset()
-                og_mcts = MCTS(self.game, self.og_nnet)
+                og_mcts = MCTS(self.game, self.og_nnet, self.cpuct_c, self.mcts_sims)
                 arena_og = bitchcage.Arena(lambda x: np.argmax(curr_mcts.getProbs(tau=0)),
                         lambda x: np.argmax(og_mcts.getProbs(tau=0)), self.game, self.net)
 
@@ -99,7 +103,7 @@ class Trainer():
     def executeEpisode(self):
         start = time.time()
         examples = []
-        mcts = MCTS(self.game, self.net)
+        mcts = MCTS(self.game, self.net, self.cpuct_t, self.mcts_sims)
         state = self.game.board.board
         state_np = self.net.board_view_player()
 

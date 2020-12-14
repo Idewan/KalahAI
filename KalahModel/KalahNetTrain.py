@@ -28,7 +28,7 @@ class AverageMeter(object):
 
 class KalahNetTrain(object):
 
-    def __init__(self, env, batch_size, device, epochs, lr=0.001, dropout=0.3):
+    def __init__(self, env, batch_size, device, epochs, lr=0.001, dropout=0.3, iteration=0.2):
         """
             Initialize the training class for KalahNet NN class
 
@@ -45,6 +45,7 @@ class KalahNetTrain(object):
         self.is_cuda = torch.cuda.is_available()
         self.nnet = kn.KalahNet(7, dropout).to(self.device).double()
         self.env = env
+        self.iter = iteration
 
         #Training parameters
         self.batch_size = batch_size
@@ -62,6 +63,8 @@ class KalahNetTrain(object):
             :return: returns nothing
         """
         optimizer = optim.Adam(self.nnet.parameters())
+        if self.iter % 20 == 0:
+            self.lr /= 10
 
         for epoch in range(self.epochs):
             print(f'EPOCH: {epoch +1}')

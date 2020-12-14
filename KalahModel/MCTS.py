@@ -15,12 +15,12 @@ EPSILON = 1e-8
 
 class MCTS():
 
-    def __init__(self, game, net):
+    def __init__(self, game, net, cpuct, no_mcts):
         self.game = game
         self.net = net
         # to tweak to get the best exploration-exploitation tradeoff
-        self.cpuct = 3
-        self.no_mcts = 50
+        self.cpuct = cpuct
+        self.no_mcts = no_mcts
 
         # the Q-values for (state, action)
         self.Q = {}

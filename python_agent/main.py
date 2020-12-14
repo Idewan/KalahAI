@@ -49,7 +49,7 @@ def main():
     # initialise the agent
     net = KalahNetTrain(game, BATCH_SIZE, DEVICE, EPOCHS, LR, DROPOUT)
     net.load_model_checkpoint("../thedestroyerofworlds.pth")
-    mcts = MCTS(game, net)
+    mcts = MCTS(game, net, 1, 50)
 
     just_moved = False
     p = Protocol()
