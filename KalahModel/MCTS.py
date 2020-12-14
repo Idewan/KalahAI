@@ -18,7 +18,7 @@ class MCTS():
         self.game = game
         self.net = net
         self.cpuct = 1
-        self.no_mcts = 25
+        self.no_mcts = 50
 
         # the Q-values for (steate, action)
         self.Q = {}
@@ -46,14 +46,15 @@ class MCTS():
 
         state_string_p = state.toString()
         counts = [self.N_sa[(state_string_p, action)] if (state_string_p, action) in self.N_sa else 0 for action in range(self.game.actionspace_size)]
-  
+        # print(tau)
+        
         if tau == 0:
             best_actions = np.array(np.argwhere(counts == np.max(counts))).flatten()
             best_action = np.random.choice(best_actions)
             probs = [0] * len(counts)
             probs[best_action] = 1
             return probs
-
+        
         counts = [x ** (1. / tau) for x in counts]
         counts_sum = float(sum(counts))
         legal_actions = np.array(self.game.getLegalMoves())

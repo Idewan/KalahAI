@@ -1,4 +1,4 @@
-import side as s
+from . import side as s
 
 class Move(object):
 

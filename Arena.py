@@ -25,10 +25,10 @@ class Arena():
                 curPlayer = 0
             else:
                 curPlayer = 1
-            print(f"Game turn {self.game.turn}")
-            print(f"Game board {self.game.board.toString()}")
+            # print(f"Game turn {self.game.turn}")
+            # print(f"Game board {self.game.board.toString()}")
             action = players[curPlayer](0)
-            print(f"Game action {action}")
+            # print(f"Game action {action}")
 
             valids = self.game.getLegalMoves()
 
@@ -54,7 +54,7 @@ class Arena():
 
         for _ in range(num):
             gameResult = self.playGame("p1")
-            print(f'Playing as player 1 {gameResult}')
+            # print(f'Playing as player 1 {gameResult}')
             if gameResult == 1:
                 oneWon += 1
             elif gameResult == -1:
@@ -67,7 +67,7 @@ class Arena():
 
         for _ in range(num):
             gameResult = self.playGame("p2")
-            print(f'Playing as player 2 {gameResult}')
+            # print(f'Playing as player 2 {gameResult}')
             if gameResult == 1:
                 oneWon += 1
             elif gameResult == -1:
