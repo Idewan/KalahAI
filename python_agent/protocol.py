@@ -1,7 +1,7 @@
-from . import moveTurn as mt
-from . import msgType as msgt
-from . import side as s
-from . import invalidMessageException as ime
+import moveTurn as mt
+import msgType as msgt
+import side as s
+import invalidMessageException as ime
 
 # TODO: CHECK AND DEBUG THIS CLASS
 

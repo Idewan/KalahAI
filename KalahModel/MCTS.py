@@ -18,8 +18,10 @@ class MCTS():
     def __init__(self, game, net, cpuct, no_mcts):
         self.game = game
         self.net = net
+
         # to tweak to get the best exploration-exploitation tradeoff
         self.cpuct = cpuct
+        # number of simulations
         self.no_mcts = no_mcts
 
         # the Q-values for (state, action)
@@ -40,73 +42,70 @@ class MCTS():
     def getProbs(self, tau=1):
 
         state = self.game.board
+        state_string_p = state.toString()
 
         for i in range(self.no_mcts):
-            # print(f'MCTS NUMBER {i}')
             game_copy = copy.deepcopy(self.game)
             self.search(game_copy, self.net)
 
-        state_string_p = state.toString()
-        counts = [self.N_sa[(state_string_p, action)] if (state_string_p, action) in self.N_sa else 0 for action in range(self.game.actionspace_size)]
-
-        legal_actions = np.array(self.game.getLegalMoves())
+        # count number of visits
+        counts = []
+        for action in range(self.game.actionspace_size):
+            if (state_string_p, action) in self.N_sa:
+                counts.append(self.N_sa[(state_string_p, action)])
+            else:
+                counts.append(0)
         
+        # select best action with probability 1 if playing competitively
         if tau == 0:
             best_actions = np.array(np.argwhere(counts == np.max(counts))).flatten()
             best_action = np.random.choice(best_actions)
             probs = [0] * len(counts)
             probs[best_action] = 1
-
-            # if legal_actions[best_action] == 0:
-            #     log.debug("ALERT ALERT ALERT")
-            #     log.debug(f'Best actions: {best_actions}')
-            #     log.debug(f'Best action: {best_action}')
-            #     log.debug(f'Probabilities: {probs}')
-
-            #     action = np.random.choice(self.game.getLegalActionState())
-            #     probs = [0] * len(counts)
-            #     probs[action] = 1
-
             return probs
         
+        legal_actions = np.array(self.game.getLegalMoves())
         counts = [x ** (1. / tau) for x in counts]
         counts_sum = float(sum(counts))
         probs = [x / counts_sum for x in counts] * legal_actions
         probs /= np.sum(probs)
-
         return probs
 
 
     def search(self, game, net):
+
+        """
+        1. Select
+        2. Expand
+        3. Simulate
+        4. Backpropagate
+        """
         
         # player and board at the root of the tree
         player = game.turn
         state = game.board
+        # string representation of state
         state_string = state.toString()
+        # the turn that called search (number of turn)
         gt = game.no_turns
 
         if state_string not in self.end_states:
             self.end_states[state_string] = game.getGameOver(game.prev_player)
         # if the game has ended (i.e. value associated with the state is non-zero) return the reward, we cannot expand any more
         if self.end_states[state_string] != 0:
-            # print('END STATES')
-            # print(f'TURN: {game.turn}')
-            # print(f'PREV: {game.prev_player}')
-            # print(f'VALUE: {self.end_states[state_string]}\n')  # this is the value i get by playing the action
             return self.end_states[state_string] 
 
-        # the state is a leaf node
-        # here if we haven't visited the state in the view of a specific player we should also consider that we need 
-        # to visit it. i.e. this has not been visited yet.
+        # has not been expanded
         if (state_string, game.turn) not in self.P:
 
             state_np = self.net.board_view_player(state, player)
 
+            # EXPAND and "SIMULATE"
             # this gives the policy vector and the value for the current player
             self.P[(state_string, game.turn)], value = self.net.predict(state_np)
-            legal_actions = game.getLegalMoves()
 
             # masking out invalid actions
+            legal_actions = game.getLegalMoves()
             self.P[(state_string, game.turn)] = self.P[(state_string, game.turn)] * legal_actions
 
             sum_P_s = np.sum(self.P[(state_string, game.turn)])
@@ -121,17 +120,36 @@ class MCTS():
             self.legal_actions[(state_string, game.turn)] = legal_actions
             self.N[state_string] = 0
 
-            # print('EXPAND')
-            # print(f'TURN: {game.turn}')
-            # print(f'PREV: {game.prev_player}')
-            # print(f'VALUE: {value}\n')  # this is the value i get by playing the action
-
+            # BACKPROPAGATE
             if gt == 2 and game.swap_occured:
                 return -value
             else:
                 # was return value if game.prev_player == game.player1 else -value
                 return value if game.prev_player == game.turn else -value
 
+        action = self.select_action(game, state_string)
+
+        if action == -1:
+            self.legal_actions[(state_string, game.turn)][0] = 0 
+        
+        next_state, _, _ = game.makeMove(action)
+        next_player = game.turn
+        prev_p = game.prev_player
+        game.prev_player = player
+
+        # recursive call to go deeper in the tree
+        value = self.search(game, self.net)
+
+        # update values
+        self.update_values(state_string, action, value)
+
+        if gt == 2 and game.swap_occured:
+            return -value
+        else:
+            return value if player == prev_p else -value
+
+
+    def select_action(self, game, state_string):
         # legal_actions is a list of 0's if illegal and 1's if legal
         legal_actions = self.legal_actions[(state_string, game.turn)]
         current_best = -float('inf')
@@ -153,22 +171,9 @@ class MCTS():
             action = -1
         else:
             action = best_action
+        return action
 
-        if action == -1:
-            self.legal_actions[(state_string, game.turn)][0] = 0 
-        
-        next_state, _, _ = game.makeMove(action)
-        next_player = game.turn
-        prev_p = game.prev_player
-        game.prev_player = player
-
-        value = self.search(game, self.net)
-
-        # print('OUT')
-        # print(f'TURN: {player}')
-        # print(f'PREV: {prev_p}')
-        # print(f'VALUE: {value}\n')  # this is the value i get by playing the action
-        
+    def update_values(self, state_string, action, value):
         if (state_string, action) in self.Q:
             self.Q[(state_string, action)] = (self.N_sa[(state_string, action)] * self.Q[(state_string, action)] + value) / (self.N_sa[(state_string, action)] + 1)
             self.N_sa[(state_string, action)] += 1
@@ -177,8 +182,3 @@ class MCTS():
             self.N_sa[(state_string, action)] = 1
         
         self.N[state_string] += 1
-
-        if gt == 2 and game.swap_occured:
-            return -value
-        else:
-            return value if player == prev_p else -value

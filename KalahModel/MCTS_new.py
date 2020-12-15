@@ -20,7 +20,7 @@ class MCTS():
 
         # to tweak to get the best exploration-exploitation tradeoff
         self.cpuct = cpuct
-        # number of simulation
+        # number of simulations
         self.no_mcts = no_mcts
 
         # the Q-values for (state, action)
@@ -53,7 +53,7 @@ class MCTS():
             else:
                 counts.append(0)
         
-        # select best action with probability 1 is playing competitively
+        # select best action with probability 1 if playing competitively
         if tau == 0:
             best_actions = np.array(np.argwhere(counts == np.max(counts))).flatten()
             best_action = np.random.choice(best_actions)
@@ -121,7 +121,7 @@ class MCTS():
         value = self.search(game)
         
         # update values
-        self.update_score(state_string, action, value)
+        self.update_values(state_string, action, value)
 
         if gt == 2 and game.swap_occured:
             return -value
@@ -129,7 +129,7 @@ class MCTS():
             return value if player == prev_p else -value
 
 
-    def update_score(self, state_string, action, value):
+    def update_values(self, state_string, action, value):
         if (state_string, action) in self.Q:
             self.Q[(state_string, action)] = (self.N_sa[(state_string, action)] * self.Q[(state_string, action)] + value) / (self.N_sa[(state_string, action)] + 1)
             self.N_sa[(state_string, action)] += 1
