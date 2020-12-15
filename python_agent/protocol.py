@@ -1,18 +1,18 @@
-import moveTurn as mt
-import msgType as msgt
-import side as s
-import invalidMessageException as ime
+from . import moveTurn as mt
+from . import msgType as msgt
+from . import side as s
+from . import invalidMessageException as ime
 
 # TODO: CHECK AND DEBUG THIS CLASS
 
 class Protocol(object):
 
     def createMoveMsg(self, hole):
-        return f'MOVE;{hole}\n'
+        return f'MOVE;{hole}'
 
 
     def createSwapMsg(self):
-        return f'SWAP\n'
+        return f'SWAP'
     
 
     def getMessageType(self, msg):
