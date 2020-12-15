@@ -63,8 +63,8 @@ class KalahNetTrain(object):
             :return: returns nothing
         """
         optimizer = optim.Adam(self.nnet.parameters())
-        if self.iter % 20 == 0:
-            self.lr /= 10
+        # if self.iter % 20 == 0:
+        #     self.lr /= 10
 
         for epoch in range(self.epochs):
             print(f'EPOCH: {epoch +1}')

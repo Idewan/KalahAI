@@ -21,7 +21,7 @@ BATCH_SIZE = 64
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 EPOCHS = 10 
 LR = 0.001
-DROPOUT = 0.5
+DROPOUT = 0.3
 NUM_GAMES = 40
 
 def sendMsg(msg):
@@ -49,7 +49,7 @@ def main():
     # initialise the agent
     net = KalahNetTrain(game, BATCH_SIZE, DEVICE, EPOCHS, LR, DROPOUT)
     net.load_model_checkpoint("../thedestroyerofworlds.pth")
-    mcts = MCTS(game, net, 1, 50)
+    mcts = MCTS(game, net, 1, 100)
 
     just_moved = False
     p = Protocol()
