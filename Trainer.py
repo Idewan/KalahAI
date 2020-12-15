@@ -30,7 +30,7 @@ class Trainer():
         self.memory = Memory(200000)
         self.num_eps = 100
         self.num_iters = 80
-        self.mcts_sims = 50
+        self.mcts_sims = 100
         self.cpuct_t = 3
         self.cpuct_c = 1
         self.opp_nnet = KalahNetTrain(self.game, BATCH_SIZE, DEVICE, EPOCHS, LR, DROPOUT, self.iter)
@@ -54,8 +54,8 @@ class Trainer():
             # log.info("Saving back-up of the memory")
             # self.save_training_memory(f"checkpoint_{i}")
             
-            nnet_name = "trial3_cpuct/checkpoint_{}.pth".format(i)
-            temp_name = "trial3_cpuct/temp.pth"
+            nnet_name = "models/checkpoint_{}.pth".format(i)
+            temp_name = "models/temp.pth"
             self.net.save_model_checkpoint(temp_name)
             self.opp_nnet.load_model_checkpoint(temp_name)
 
@@ -86,7 +86,7 @@ class Trainer():
             else:
                 print('New model is banging')
                 self.net.save_model_checkpoint(nnet_name)
-                self.net.save_model_checkpoint("trial3_cpuct/thedestroyerofworlds.pth")
+                self.net.save_model_checkpoint("models/thedestroyerofworlds.pth")
 
                 print("Pitting against the Original Network")
                 self.game.reset()
