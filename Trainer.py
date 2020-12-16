@@ -3,6 +3,7 @@ import torch
 import random
 import numpy as np
 import time
+import math
 from tqdm import tqdm
 
 from KalahModel.KalahNetTrain import KalahNetTrain
@@ -53,8 +54,8 @@ class Trainer():
             # log.info("Saving back-up of the memory")
             # self.save_training_memory(f"checkpoint_{i}")
             
-            nnet_name = "model_jokes/checkpoint_{}.pth".format(i)
-            temp_name = "model_jokes/temp.pth"
+            nnet_name = "model_3/checkpoint_{}.pth".format(i)
+            temp_name = "model_3/temp.pth"
             self.net.save_model_checkpoint(temp_name)
             self.opp_nnet.load_model_checkpoint(temp_name)
 
@@ -84,7 +85,7 @@ class Trainer():
             else:
                 print('New model is banging')
                 self.net.save_model_checkpoint(nnet_name)
-                self.net.save_model_checkpoint("model_jokes/thedestroyerofworlds.pth")
+                self.net.save_model_checkpoint("model_3/thedestroyerofworlds.pth")
 
                 print("Pitting against the Original Network")
                 self.game.reset()
