@@ -17,8 +17,8 @@ class Memory(object):
 
 
     def sample(self, batch_size):
-        # print(len(self.memory))
         assert batch_size <= len(self.memory)
+        random.shuffle(self.memory)
 
         return random.sample(self.memory, batch_size)
 

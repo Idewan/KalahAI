@@ -35,9 +35,6 @@ class MCTS():
 
         # stores the score for the end games
         self.end_states = {}
-        # stores the valid moves
-        self.legal_actions = {}
-
 
     def getProbs(self, tau=1):
 
@@ -67,9 +64,10 @@ class MCTS():
         legal_actions = np.array(self.game.getLegalMoves())
         counts = [x ** (1. / tau) for x in counts]
         counts_sum = float(sum(counts))
-        probs = [x / counts_sum for x in counts] * legal_actions
-        probs /= np.sum(probs)
-        return probs
+        probs = [x / counts_sum for x in counts]
+
+        np_probs = np.array(probs)
+        return np_probs.copy()
 
 
     def search(self, game, net):
@@ -103,6 +101,7 @@ class MCTS():
             # EXPAND and "SIMULATE"
             # this gives the policy vector and the value for the current player
             self.P[(state_string, game.turn)], value = self.net.predict(state_np)
+            value = value[0]
 
             # masking out invalid actions
             legal_actions = game.getLegalMoves()
@@ -117,7 +116,6 @@ class MCTS():
                 self.P[(state_string, game.turn)] = self.P[(state_string, game.turn)] + legal_actions
                 self.P[(state_string, game.turn)] /= np.sum(self.P[(state_string, game.turn)])
 
-            self.legal_actions[(state_string, game.turn)] = legal_actions
             self.N[state_string] = 0
 
             # BACKPROPAGATE
@@ -128,9 +126,6 @@ class MCTS():
                 return value if game.prev_player == game.turn else -value
 
         action = self.select_action(game, state_string)
-
-        if action == -1:
-            self.legal_actions[(state_string, game.turn)][0] = 0 
         
         next_state, _, _ = game.makeMove(action)
         next_player = game.turn
@@ -151,7 +146,7 @@ class MCTS():
 
     def select_action(self, game, state_string):
         # legal_actions is a list of 0's if illegal and 1's if legal
-        legal_actions = self.legal_actions[(state_string, game.turn)]
+        legal_actions = game.getLegalMoves()
         current_best = -float('inf')
         best_action = -5
 

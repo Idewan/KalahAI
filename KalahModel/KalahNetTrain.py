@@ -63,9 +63,10 @@ class KalahNetTrain(object):
             :return: returns nothing
         """
         optimizer = optim.Adam(self.nnet.parameters())
-        # if self.iter % 20 == 0:
+        # self.iter+=1
+        # if self.iter % 500 == 0:
         #     self.lr /= 10
-
+        # print(self.iter)
         for epoch in range(self.epochs):
             print(f'EPOCH: {epoch +1}')
             self.nnet.train()
@@ -88,7 +89,6 @@ class KalahNetTrain(object):
                 s = torch.reshape(s, (self.batch_size, 16))
                 pi = torch.reshape(pi, (self.batch_size, 8))
                 v = torch.reshape(v, (self.batch_size, 1))
-
 
                 if self.is_cuda:
                     s, pi, v = s.contiguous().cuda(), pi.contiguous().cuda(), v.contiguous().cuda()

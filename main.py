@@ -1,8 +1,8 @@
-from protocol import Protocol
-from board import Board
-from kalah_train import Kalah
-from side import Side
-from msgType import MsgType
+from python_agent.protocol import Protocol
+from python_agent.board import Board
+from python_agent.kalah_train import Kalah
+from python_agent.side import Side
+from python_agent.msgType import MsgType
 
 import sys
 import random
@@ -13,7 +13,6 @@ import logging
 logging.basicConfig(level=logging.DEBUG, filename='debug.log')
 logging.debug('******** NEW GAME ********')
 
-sys.path.append('../')
 from KalahModel.KalahNetTrain import KalahNetTrain
 from KalahModel.MCTS import MCTS
 
@@ -48,8 +47,8 @@ def main():
 
     # initialise the agent
     net = KalahNetTrain(game, BATCH_SIZE, DEVICE, EPOCHS, LR, DROPOUT)
-    net.load_model_checkpoint("../thedestroyerofworlds.pth")
-    mcts = MCTS(game, net, 1, 100)
+    net.load_model_checkpoint("thedestroyerofworlds.pth")
+    mcts = MCTS(game, net, 3, 25)
 
     just_moved = False
     p = Protocol()
