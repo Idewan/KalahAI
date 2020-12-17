@@ -40,7 +40,7 @@ def main():
     game = Kalah(board)
 
     # initialise the agent
-    mcts = MCTS(game, 6, SIMULATIONS)
+    mcts = MCTS(game, 2.4, SIMULATIONS)
 
     just_moved = False
     p = Protocol()

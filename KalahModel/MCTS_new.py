@@ -23,7 +23,7 @@ class MCTS():
         # number of simulations
         self.no_mcts = no_mcts
         
-        self.playout_n = 10
+        self.playout_n = 4
 
         # the number of times the edge (state, action) was visited
         self.N_sa = {}
@@ -166,6 +166,7 @@ class MCTS():
                 game_c = copy.deepcopy(game)
                 game_c.makeMove(action)
 
+                
                 # get the score difference
                 score_me = game_c.board.getSeedsInStore(player_curr)
                 opp_side = copy.deepcopy(player_curr)
@@ -176,7 +177,7 @@ class MCTS():
                 self.v_sa[key_long] = score_me - score_opp
 
                 j_s_in = game_c.no_turns == 2 and game_c.swap_occured
-
+                
                 if player_curr == key_short[1] and not j_s_in:
                     if self.v_sa[key_long] > self.v[key_short]:
                         self.v[key_short] = self.v_sa[key_long]
