@@ -23,16 +23,22 @@ class MCTS():
         # number of simulations
         self.no_mcts = no_mcts
 
-        # the Q-values for (state, action)
-        self.Q = {}
         # the number of times the edge (state, action) was visited
         self.N_sa = {}
         # the number of times the state has been visited
         self.N = {}
         # visited states
         self.visited = set()
-        # stores the score for the end games (or 0 if game has not ended)
-        self.end_states = {}
+        # heuristic value (state_string, game.turn)
+        self.v = {}
+        # 
+        self.v_sa = {}
+        #
+        self.r = {}
+        #
+        self.r_sa = {}
+        # alpha value for implicit minimax
+        self.alpha = 0.4
 
 
     def getProbs(self, tau=1):
@@ -43,15 +49,21 @@ class MCTS():
         # run simulation
         for i in range(self.no_mcts):
             game_copy = copy.deepcopy(self.game)
-            self.search(game_copy)
+            key = (None, None, False, -2)
+            self.simulate(game_copy, key)
+
+        key_short = (state_string_p, self.game.turn, self.game.no_turns == 2 and self.game.swap_occured)
 
         # count number of visits
         counts = []
         for action in range(self.game.actionspace_size):
-            if (state_string_p, action) in self.N_sa:
-                counts.append(self.N_sa[(state_string_p, action)])
+            key_long = key_short + (action,)
+            if key_long in self.N_sa:
+                counts.append(self.N_sa[key_long])
             else:
                 counts.append(0)
+
+        log.debug(f'COUNTS: {counts}')
         
         # select best action with probability 1 if playing competitively
         if tau == 0:
@@ -59,6 +71,7 @@ class MCTS():
             best_action = np.random.choice(best_actions)
             probs = [0] * len(counts)
             probs[best_action] = 1
+            log.debug(f'PROBABILITIES: {probs}')
             return probs
         
         counts = [x ** (1. / tau) for x in counts]
@@ -67,106 +80,169 @@ class MCTS():
         return probs
 
 
-    def search(self, game):
+    def q_im(self, key_long):
+        """
+            
+        """
+        return (1 - self.alpha) * (self.r_sa[key_long] / self.N_sa[(key_long)]) + self.alpha * self.v_sa[(key_long)]
+
+    
+    def calculate_uct(self, key_long, key_short):
+        """
 
         """
-        1. Select
-        2. Expand
-        3. Simulate
-        4. Backpropagate
+        return self.q_im(key_long) + self.cpuct * math.sqrt(math.log(self.N[key_short]) / self.N_sa[key_long])
+
+
+    def select(self, game, key_short):
+        """
+
+        """
+        legal_actions = game.getLegalMoves()
+        best_uct = -float('inf')
+        actions = {}
+
+        for action in range(game.actionspace_size):
+            if legal_actions[action]:
+                action = -1 if action == 0 else action
+                key_long = key_short + (action,)
+                uct_val = self.calculate_uct(key_long, key_short)
+                if uct_val not in actions:
+                    actions[uct_val] = [action]
+                else:
+                    actions[uct_val].append(action)
+
+        best_actions = actions[max(actions)]
+
+        return np.random.choice(best_actions)
+
+
+    def revert_game(self, game, board, r, p1, p2, t, prev_p, s_p1, s_p2, no, s_o):
+        """
+
+        """
+        game.board, game.reward = copy.deepcopy(board), r
+        game.player1, game.player2, game.turn, game.prev_player = p1, p2, t, prev_p
+        game.score_player1, game.score_player2, game.no_turns = s_p1, s_p2, no
+        game.swap_occured = s_o
+
+        return game
+
+
+    def update(self, legal_actions, key_short, reward):
         """
         
-        # player and board at the root of the tree
+        """
+        self.N[key_short] += 1
+        self.r[key_short] += reward
+
+        for action in legal_actions:
+            key_long = key_short + (action,)
+            if self.v_sa[key_long] > self.v[key_short]:
+                self.v[key_short] = self.v_sa[key_long]
+
+
+    def simulate(self, game, key_long_parent):
+        """
+
+        """
         player = game.turn
-        state = game.board
-        # string representation of state
-        state_string = state.toString()
-        # the turn that called search (number of turn)
-        gt = game.no_turns
+        state_string = game.board.toString()
+        gt = game.no_turns  # the turn that called search (number of turn)
+        just_swapped = gt == 2 and game.swap_occured
 
-        if state_string not in self.end_states:
-            self.end_states[state_string] = game.getGameOver(game.prev_player)
+        key_short = (state_string, player, just_swapped)
 
-        # if the game has ended (i.e. value associated with the state is non-zero)
-        # return the reward, we cannot expand any more
-        if self.end_states[state_string] != 0:
-            return self.end_states[state_string] 
+        # get game over 
+        r_turn = game.getGameOver(game.prev_player)
+        if r_turn != 0:
+            return r_turn
 
         # has not been expanded
-        if state_string not in self.visited:
+        if key_short not in self.visited:
 
             # EXPAND
-            self.visited.add(state_string)
+            self.visited.add(key_short)
+            self.N[key_short] = 0
+            self.r[key_short] = 0
+            self.v[key_short] = -float('inf')
+
+            legal_actions = game.getLegalActionState()
+
+            for action in legal_actions:
+                game_c = copy.deepcopy(game)
+                game_c.makeMove(action)
+
+                # get the score difference
+                score_me = game_c.board.getSeedsInStore(game_c.turn)
+                opp_side = game_c.turn.opposite(game_c.turn)
+                score_opp = game_c.board.getSeedsInStore(opp_side)
+
+                # get long key 
+                key_long = key_short + (action,)
+                self.v_sa[key_long] = score_me - score_opp
+                
+                if self.v_sa[key_long] > self.v[key_short]:
+                    self.v[key_short] = self.v_sa[key_long]
+                
+                # initialize RSA for current state
+                self.r_sa[key_long] = 0
+                self.N_sa[key_long] = EPSILON
+                
+            # PLAYOUT
             the_copy = copy.deepcopy(game)
-            self.N[state_string] = 0
+            reward = self.play_out(the_copy)
 
-            # SIMULATE
-            value = self.play_out(the_copy)
-
+            # UPDATE
+            self.update(legal_actions, key_short, reward)
+               
             # BACKPROPAGATE
-            if gt == 2 and game.swap_occured:
-                return -value
+            if just_swapped:
+                reward = -reward
             else:
-                return value if game.prev_player == game.turn else -value
+                reward = reward if game.prev_player == game.turn else -reward
+            
+            if None not in key_long_parent:
+                self.r_sa[key_long_parent] = reward
+                self.N_sa[key_long_parent] = 1
+            
+            return reward
 
         # SELECT
-        action = self.select_action(game, state_string)
+        action = self.select(game, key_short)
 
-        next_state, _, _ = game.makeMove(action)
-        next_player = game.turn
+        legal_actions = game.getLegalActionState()
+
+        # play action
+        game.makeMove(action)
         prev_p = game.prev_player
         game.prev_player = player
 
+        key_long_curr = key_short + (action,)
+
         # recursive call to go deeper in the tree
-        value = self.search(game)
-        
-        # update values
-        self.update_values(state_string, action, value)
+        reward = self.simulate(game, key_long_curr)
+
+        self.v_sa[key_long_curr] = 0
+
+        # UPDATE
+        self.update(legal_actions, key_short, reward)
 
         if gt == 2 and game.swap_occured:
-            return -value
+            reward = -reward
         else:
-            return value if player == prev_p else -value
+            reward = reward if player == prev_p else -reward
 
+        self.r_sa[key_long_curr] += reward
+        self.N_sa[key_long_curr] += 1
 
-    def update_values(self, state_string, action, value):
-        if (state_string, action) in self.Q:
-            self.Q[(state_string, action)] = (self.N_sa[(state_string, action)] * self.Q[(state_string, action)] + value) / (self.N_sa[(state_string, action)] + 1)
-            self.N_sa[(state_string, action)] += 1
-        else:
-            self.Q[(state_string, action)] = value
-            self.N_sa[(state_string, action)] = 1
-        
-        self.N[state_string] += 1
-
-
-    def select_action(self, game, state_string):
-
-        # legal_actions is a list of 0's if illegal and 1's if legal
-        legal_actions = game.getLegalMoves()
-        current_best = -float('inf')
-        best_action = -5
-
-        # UCB
-        for action in range(game.actionspace_size):
-            if legal_actions[action]:
-                if (state_string, action) in self.Q:
-                    u = self.Q[(state_string, action)] + self.cpuct * math.sqrt(self.N[state_string]) / (1 + self.N_sa[(state_string, action)])
-                else:
-                    u = self.cpuct * math.sqrt(self.N[state_string] + EPSILON)
-
-                if u > current_best:
-                    current_best = u
-                    best_action = action
-
-        if best_action == 0:
-            action = -1
-        else:
-            action = best_action
-        return action
+        return reward
 
 
     def play_out(self, game):
+        """
+
+        """
         starting_turn = game.turn
         num_turn = game.no_turns
         done = game.getGameOver(starting_turn) != 0

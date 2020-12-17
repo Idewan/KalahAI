@@ -15,7 +15,7 @@ logging.debug('******** NEW GAME ********')
 
 from KalahModel.MCTS_new import MCTS
 
-SIMULATIONS = 10000
+SIMULATIONS = 100
 
 def sendMsg(msg):
     print(msg)
@@ -40,7 +40,7 @@ def main():
     game = Kalah(board)
 
     # initialise the agent
-    mcts = MCTS(game, 1.41, SIMULATIONS)
+    mcts = MCTS(game, 1, SIMULATIONS)
 
     just_moved = False
     p = Protocol()
@@ -49,11 +49,11 @@ def main():
         
         # read message
         message = recvMsg()
-        # logging.debug(f'MSG: {message}')
+        logging.debug(f'MSG: {message}')
 
         # interprest message with protocol
         message_type = p.getMessageType(message)
-        # logging.debug(f'MSG TYPE: {message_type}')
+        logging.debug(f'MSG TYPE: {message_type}')
 
         # START
         if message_type == MsgType.START:
@@ -61,7 +61,7 @@ def main():
             turn = p.interpretStartMsg(message)
 
             if turn:
-                # logging.debug(f'I AM PLAYING ON START :)')
+                logging.debug(f'I AM PLAYING ON START :)')
 
                 action = np.argmax(mcts.getProbs(tau=0))
                 msg = p.createMoveMsg(action)
@@ -69,11 +69,11 @@ def main():
                 game.makeMove(action)
                 just_moved = True
 
-                # logging.debug(f'ACTION: {action}')
-                # logging.debug(f'I am sending this message: {msg}')
-                # logging.debug(f'Board after I moved: \n {game.board.toString()} \n')
+                logging.debug(f'ACTION: {action}')
+                logging.debug(f'I am sending this message: {msg}')
+                logging.debug(f'Board after I moved: \n {game.board.toString()} \n')
             else:
-                # logging.debug(f'I AM NOT PLAYING ON START :(\n')
+                logging.debug(f'I AM NOT PLAYING ON START :(\n')
                 continue
 
         # CHANGE
@@ -85,9 +85,9 @@ def main():
                 game.makeMove(action)
                 just_moved = False
 
-                # logging.debug(f'I HAVE NOT JUST MOVED, SO I NEED TO UPDATE THE BOARD WITH THE OPPONENT\'S MOVE')
-                # logging.debug(f'ACTION: {action}')
-                # logging.debug(f'Board after other player moved: \n {game.board.toString()} \n')
+                logging.debug(f'I HAVE NOT JUST MOVED, SO I NEED TO UPDATE THE BOARD WITH THE OPPONENT\'S MOVE')
+                logging.debug(f'ACTION: {action}')
+                logging.debug(f'Board after other player moved: \n {game.board.toString()} \n')
 
             if p.get_again(message):            
                 action = np.argmax(mcts.getProbs(tau=0))
@@ -101,18 +101,18 @@ def main():
                 game.makeMove(action)
                 just_moved = True
 
-                # logging.debug(f'MY TURN TO MOVE')
-                # logging.debug(f'ACTION: {action}')
-                # logging.debug(f'I am sending this message: {msg}')
-                # logging.debug(f'Board after I moved: \n {game.board.toString()}')
+                logging.debug(f'MY TURN TO MOVE')
+                logging.debug(f'ACTION: {action}')
+                logging.debug(f'I am sending this message: {msg}')
+                logging.debug(f'Board after I moved: \n {game.board.toString()}')
             
             if not p.get_again(message):
                 just_moved = False
-                # logging.debug(f'Setting just_moved to FALSE')
+                logging.debug(f'Setting just_moved to FALSE')
 
         # END
         elif message_type == MsgType.END:
-            # logging.debug(f'THIS IS THE END :(')
+            logging.debug(f'THIS IS THE END :(')
             break
 
 
