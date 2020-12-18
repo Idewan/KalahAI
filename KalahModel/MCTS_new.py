@@ -8,7 +8,7 @@ from python_agent.kalah_train import Kalah
 from python_agent.board import Board
 from python_agent.side import Side
 
-log.basicConfig(level=log.DEBUG, filename='./logs/MCTS_new_debug.log', format='%(asctime)s %(message)s')
+# log.basicConfig(level=log.DEBUG, filename='./logs/MCTS_new_debug.log', format='%(asctime)s %(message)s')
 # sys.setrecursionlimit(10000)
 
 EPSILON = 1e-8 
@@ -53,9 +53,9 @@ class MCTS():
 
         # run simulation
         for i in range(self.no_mcts):
-            log.debug(f'****************************************************')
-            log.debug(f'****************** SIMULATION {i} ******************')
-            log.debug(f'****************************************************')
+            # log.debug(f'****************************************************')
+            # log.debug(f'****************** SIMULATION {i} ******************')
+            # log.debug(f'****************************************************')
             game_copy = copy.deepcopy(self.game)
             key = (None, None, False, -2)
             self.simulate(game_copy, key, game_copy.turn)
@@ -76,8 +76,8 @@ class MCTS():
                 values.append(0)
                 counts.append(0)    
 
-        log.debug(f'COUNTS: {counts}')
-        log.debug(f'VALUES: {values}')
+        # log.debug(f'COUNTS: {counts}')
+        # log.debug(f'VALUES: {values}')
         return counts
 
 
@@ -121,8 +121,8 @@ class MCTS():
         # else:
         #     best_actions = actions[min(actions)]
 
-        log.debug(f"THE UCT FOR ACTIONS {actions}")
-        log.debug(f"{is_max} and best/worst actions {best_actions}")
+        # log.debug(f"THE UCT FOR ACTIONS {actions}")
+        # log.debug(f"{is_max} and best/worst actions {best_actions}")
 
         return np.random.choice(best_actions)
 
