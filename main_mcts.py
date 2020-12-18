@@ -15,7 +15,7 @@ logging.debug('******** NEW GAME ********')
 
 from KalahModel.MCTS_new import MCTS
 
-SIMULATIONS = 500
+SIMULATIONS = 300
 
 def sendMsg(msg):
     print(msg)
@@ -103,14 +103,14 @@ def main():
                 game.makeMove(action)
                 just_moved = True
 
+                if action == -1:
+                    just_moved = False
+
                 logging.debug(f'Board after I moved: \n {game.board.toString()}')
             
             if not p.get_again(message):
                 just_moved = False
                 logging.debug(f'Setting just_moved to FALSE')
-
-            if action == -1:
-                just_moved = True
 
         # END
         elif message_type == MsgType.END:

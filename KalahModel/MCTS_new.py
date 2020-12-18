@@ -40,7 +40,7 @@ class MCTS():
         #
         self.r_sa = {}
         # alpha value for implicit minimax
-        self.alpha = 0.4
+        self.alpha = 0.3
 
 
     def getProbs(self):
