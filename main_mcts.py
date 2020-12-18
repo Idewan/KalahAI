@@ -15,7 +15,7 @@ logging.debug('******** NEW GAME ********')
 
 from KalahModel.MCTS_new import MCTS
 
-SIMULATIONS = 500
+SIMULATIONS = 100
 
 def sendMsg(msg):
     print(msg)
