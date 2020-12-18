@@ -39,10 +39,10 @@ def compute_stats(first, opponent, iterations = 5):
 
 
 if __name__ == '__main__':
-    num_iters = 50
+    num_iters = 5
 
-    # compute_stats(True, 'MKRefAgent', num_iters)
-    # compute_stats(False, 'MKRefAgent', num_iters)
+    compute_stats(True, 'MKRefAgent', num_iters)
+    compute_stats(False, 'MKRefAgent', num_iters)
 
     compute_stats(True, 'Group2Agent', num_iters)
     compute_stats(False, 'Group2Agent', num_iters)

@@ -15,7 +15,7 @@ logging.debug('******** NEW GAME ********')
 
 from KalahModel.MCTS_new import MCTS
 
-SIMULATIONS = 100
+SIMULATIONS = 500
 
 def sendMsg(msg):
     print(msg)
@@ -40,13 +40,12 @@ def main():
     game = Kalah(board)
 
     # initialise the agent
-    mcts = MCTS(game, 2.4, SIMULATIONS)
+    mcts = MCTS(game, 3, SIMULATIONS)
 
     just_moved = False
     p = Protocol()
     
     while True:
-        
         # read message
         message = recvMsg()
         logging.debug(f'MSG: {message}')
@@ -90,8 +89,9 @@ def main():
                 logging.debug(f'Board after other player moved: \n {game.board.toString()} \n')
 
             if p.get_again(message):    
-                logging.debug(f'MY TURN TO MOVE')        
+                logging.debug(f'MY TURN TO MOVE')
                 action = np.argmax(mcts.getProbs())
+
                 if action == 0:
                     action = -1
                     msg = p.createSwapMsg()                   
@@ -108,6 +108,9 @@ def main():
             if not p.get_again(message):
                 just_moved = False
                 logging.debug(f'Setting just_moved to FALSE')
+
+            if action == -1:
+                just_moved = True
 
         # END
         elif message_type == MsgType.END:

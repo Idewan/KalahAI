@@ -11,7 +11,7 @@ from python_agent.side import Side
 log.basicConfig(level=log.DEBUG, filename='./logs/MCTS_new_debug.log', format='%(asctime)s %(message)s')
 # sys.setrecursionlimit(10000)
 
-EPSILON = 1e-8
+EPSILON = 1e-8 
 
 class MCTS():
 
@@ -47,12 +47,15 @@ class MCTS():
 
         state = self.game.board
         state_string_p = state.toString()
+        
+        if -1 in self.game.getLegalActionState():
+            return [1, 0, 0, 0, 0, 0, 0, 0]
 
         # run simulation
         for i in range(self.no_mcts):
-            # log.debug(f'****************************************************')
-            # log.debug(f'****************** SIMULATION {i} ******************')
-            # log.debug(f'****************************************************')
+            log.debug(f'****************************************************')
+            log.debug(f'****************** SIMULATION {i} ******************')
+            log.debug(f'****************************************************')
             game_copy = copy.deepcopy(self.game)
             key = (None, None, False, -2)
             self.simulate(game_copy, key, game_copy.turn)
@@ -82,7 +85,9 @@ class MCTS():
         """
             
         """
-        return (1 - self.alpha) * (self.r_sa[key_long] / self.N_sa[(key_long)]) + self.alpha * self.v_sa[(key_long)]
+        # scaled_v = 1 / (1 + math.exp(-self.v_sa[key_long]))
+        scaled_v = self.v_sa[key_long]
+        return (1 - self.alpha) * (self.r_sa[key_long] / self.N_sa[key_long]) + self.alpha * scaled_v
 
     
     def calculate_uct(self, key_long, key_short):
@@ -92,44 +97,64 @@ class MCTS():
         return self.q_im(key_long) + self.cpuct * math.sqrt(math.log(self.N[key_short]) / self.N_sa[key_long])
 
 
-    def select(self, game, key_short):
+    def select(self, game, key_short, is_max):
         """
 
         """
         legal_actions = game.getLegalMoves()
-        best_uct = -float('inf')
         actions = {}
 
         for action in range(game.actionspace_size):
             if legal_actions[action]:
                 action = -1 if action == 0 else action
                 key_long = key_short + (action,)
+
                 uct_val = self.calculate_uct(key_long, key_short)
+
                 if uct_val not in actions:
                     actions[uct_val] = [action]
                 else:
                     actions[uct_val].append(action)
-
+        
+        # if is_max:
         best_actions = actions[max(actions)]
+        # else:
+        #     best_actions = actions[min(actions)]
+
+        log.debug(f"THE UCT FOR ACTIONS {actions}")
+        log.debug(f"{is_max} and best/worst actions {best_actions}")
 
         return np.random.choice(best_actions)
 
 
-    def update(self, legal_actions, key_short, reward, boss_turn, js):
+    def update(self, legal_actions, key_short, reward, boss_turn):
         """
         
         """
         self.N[key_short] += 1
         self.r[key_short] += reward
+        # best_action = ""
+        # update = False
 
         for action in legal_actions:
             key_long = key_short + (action,)
-            if boss_turn and not js:
+            if boss_turn:
                 if self.v_sa[key_long] > self.v[key_short]:
                     self.v[key_short] = self.v_sa[key_long]
+                    # best_action = key_long
+                    # update = True
             else:
                 if self.v_sa[key_long] < self.v[key_short]:
-                    self.v[key_short] = self.v_sa[key_long]
+                    self.v[key_short] = self.v_sa[key_long] 
+                    # best_action = key_long
+                    # update = True
+        
+        # if update:
+        #     self.v[key_short] /= self.N_sa[best_action] 
+        #     self.v[key_short] *= self.N[key_short]
+        # else:
+        #     self.v[key_short] += 1
+
 
     def simulate(self, game, key_long_parent, player):
         """
@@ -141,7 +166,7 @@ class MCTS():
         just_swapped = gt == 2 and game.swap_occured
 
         if just_swapped:
-            player_curr = player.opposite(player_curr)
+            player_curr = player_curr.opposite(player_curr)
 
         key_short = (state_string, game.turn, just_swapped)
 
@@ -166,7 +191,6 @@ class MCTS():
                 game_c = copy.deepcopy(game)
                 game_c.makeMove(action)
 
-                
                 # get the score difference
                 score_me = game_c.board.getSeedsInStore(player_curr)
                 opp_side = copy.deepcopy(player_curr)
@@ -176,9 +200,14 @@ class MCTS():
                 key_long = key_short + (action,)
                 self.v_sa[key_long] = score_me - score_opp
 
-                j_s_in = game_c.no_turns == 2 and game_c.swap_occured
-                
-                if player_curr == key_short[1] and not j_s_in:
+                j_s_in = game_c.no_turns == 2 
+
+                if game_c.no_turns == 2:
+                    is_max = player_curr != key_short[1]
+                else:
+                    is_max = player_curr == key_short[1]
+
+                if is_max:
                     if self.v_sa[key_long] > self.v[key_short]:
                         self.v[key_short] = self.v_sa[key_long]
                 else:
@@ -187,30 +216,24 @@ class MCTS():
                 
                 # initialize RSA for current state
                 self.r_sa[key_long] = 0
-                self.N_sa[key_long] = EPSILON
+                self.N_sa[key_long] = 1
             
             # PLAYOUT
             the_copy = copy.deepcopy(game)
             reward = self.play_out(player_curr, the_copy, self.playout_n)
 
             # UPDATE
-            self.update(legal_actions, key_short, reward, player_curr == key_short[1], just_swapped)
-               
-            # BACKPROPAGATE
-            if just_swapped:
-                reward = -self.r[key_short]
-            else:
-                reward = self.r[key_short] if game.prev_player == game.turn else -self.r[key_short]
+            self.update(legal_actions, key_short, reward, player_curr == key_short[1])
             
             if None not in key_long_parent:
                 self.r_sa[key_long_parent] = reward
-                self.N_sa[key_long_parent] = 1
+                self.N_sa[key_long_parent] += 1
                 self.v_sa[key_long_parent] = self.v[key_short]
             
             return reward
 
         # SELECT
-        action = self.select(game, key_short)
+        action = self.select(game, key_short, player_curr == key_short[1])
 
         legal_actions = game.getLegalActionState()
 
@@ -225,12 +248,12 @@ class MCTS():
         reward = self.simulate(game, key_long_curr, player_curr)
 
         # UPDATE
-        self.update(legal_actions, key_short, reward, player_curr == key_short[1], game.no_turns == 2 and game.swap_occured)
+        self.update(legal_actions, key_short, reward, player_curr == key_short[1])
 
         if just_swapped:
             reward = -self.r[key_short]
         else:
-            reward = self.r[key_short] if prev_p == game.turn else -self.r[key_short]
+            reward = self.r[key_short] if key_long_parent[1] == key_short[1] else -self.r[key_short]
             
         if None not in key_long_parent:
             self.r_sa[key_long_parent] += reward
